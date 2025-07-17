@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-user-plus text-primary"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">إضافة موظف جديد للنظام - للمدير والأدمن فقط</p>
+        </div>
+        <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للقائمة
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" id="employeeForm">
+            {% csrf_token %}
+            
+            <!-- بيانات المستخدم -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i>
+                        بيانات المستخدم
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ user_form.first_name.id_for_label }}" class="form-label">
+                                {{ user_form.first_name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                                <div class="text-danger">{{ user_form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ user_form.last_name.id_for_label }}" class="form-label">
+                                {{ user_form.last_name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ user_form.last_name }}
+                            {% if user_form.last_name.errors %}
+                                <div class="text-danger">{{ user_form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ user_form.username.id_for_label }}" class="form-label">
+                                {{ user_form.username.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ user_form.username }}
+                            {% if user_form.username.errors %}
+                                <div class="text-danger">{{ user_form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ user_form.email.id_for_label }}" class="form-label">
+                                {{ user_form.email.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ user_form.email }}
+                            {% if user_form.email.errors %}
+                                <div class="text-danger">{{ user_form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ user_form.password1.id_for_label }}" class="form-label">
+                                {{ user_form.password1.label }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ user_form.password1 }}
+                                <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePassword1" title="عرض كلمة المرور">
+                                    <i class="fas fa-eye" id="eyeIcon1"></i>
+                                </button>
+                            </div>
+                            {% if user_form.password1.errors %}
+                                <div class="text-danger">{{ user_form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ user_form.password2.id_for_label }}" class="form-label">
+                                {{ user_form.password2.label }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ user_form.password2 }}
+                                <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePassword2" title="عرض كلمة المرور">
+                                    <i class="fas fa-eye" id="eyeIcon2"></i>
+                                </button>
+                            </div>
+                            {% if user_form.password2.errors %}
+                                <div class="text-danger">{{ user_form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- بيانات الموظف -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase"></i>
+                        بيانات الوظيفة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ employee_form.role.id_for_label }}" class="form-label">
+                                {{ employee_form.role.label }}
+                            </label>
+                            {{ employee_form.role }}
+                            {% if employee_form.role.errors %}
+                                <div class="text-danger">{{ employee_form.role.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ employee_form.department.id_for_label }}" class="form-label">
+                                {{ employee_form.department.label }}
+                            </label>
+                            {{ employee_form.department }}
+                            {% if employee_form.department.errors %}
+                                <div class="text-danger">{{ employee_form.department.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ employee_form.hire_date.id_for_label }}" class="form-label">
+                                {{ employee_form.hire_date.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ employee_form.hire_date }}
+                            {% if employee_form.hire_date.errors %}
+                                <div class="text-danger">{{ employee_form.hire_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ employee_form.salary.id_for_label }}" class="form-label">
+                                {{ employee_form.salary.label }}
+                            </label>
+                            {{ employee_form.salary }}
+                            {% if employee_form.salary.errors %}
+                                <div class="text-danger">{{ employee_form.salary.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ employee_form.employment_status.id_for_label }}" class="form-label">
+                                {{ employee_form.employment_status.label }}
+                            </label>
+                            {{ employee_form.employment_status }}
+                            {% if employee_form.employment_status.errors %}
+                                <div class="text-danger">{{ employee_form.employment_status.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ employee_form.phone.id_for_label }}" class="form-label">
+                                {{ employee_form.phone.label }}
+                            </label>
+                            {{ employee_form.phone }}
+                            {% if employee_form.phone.errors %}
+                                <div class="text-danger">{{ employee_form.phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ employee_form.address.id_for_label }}" class="form-label">
+                            {{ employee_form.address.label }}
+                        </label>
+                        {{ employee_form.address }}
+                        {% if employee_form.address.errors %}
+                            <div class="text-danger">{{ employee_form.address.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ employee_form.notes.id_for_label }}" class="form-label">
+                            {{ employee_form.notes.label }}
+                        </label>
+                        {{ employee_form.notes }}
+                        {% if employee_form.notes.errors %}
+                            <div class="text-danger">{{ employee_form.notes.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> حفظ الموظف
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    تعليمات
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> املأ جميع الحقول المطلوبة (المميزة بـ *)</li>
+                    <li><i class="fas fa-check text-success"></i> اختر دور وظيفي مناسب للموظف</li>
+                    <li><i class="fas fa-check text-success"></i> تأكد من صحة البريد الإلكتروني</li>
+                    <li><i class="fas fa-check text-success"></i> استخدم الأزرار لعرض/إخفاء كلمة المرور</li>
+                    <li><i class="fas fa-check text-success"></i> سيتم إنشاء رقم موظف تلقائياً</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-key"></i>
+                    متطلبات كلمة المرور
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-circle text-muted" style="font-size: 0.5rem;"></i> 8 أحرف على الأقل</li>
+                    <li><i class="fas fa-circle text-muted" style="font-size: 0.5rem;"></i> أحرف صغيرة (a-z)</li>
+                    <li><i class="fas fa-circle text-muted" style="font-size: 0.5rem;"></i> أحرف كبيرة (A-Z)</li>
+                    <li><i class="fas fa-circle text-muted" style="font-size: 0.5rem;"></i> أرقام (0-9)</li>
+                    <li><i class="fas fa-circle text-muted" style="font-size: 0.5rem;"></i> رموز خاصة (!@#$%)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt"></i>
+                    الأمان
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <small>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        هذه الصفحة متاحة للمدير والأدمن فقط. تأكد من منح الصلاحيات المناسبة للموظف الجديد.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.password-toggle-btn {
+    border-left: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.password-toggle-btn:focus {
+    box-shadow: none;
+    background-color: #e9ecef;
+}
+
+.input-group .form-control:focus + .password-toggle-btn {
+    border-color: #86b7fe;
+}
+
+#passwordStrength {
+    font-size: 0.875rem;
+}
+
+.strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 5px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // وظيفة عرض/إخفاء كلمة المرور الأولى
+    const togglePassword1 = document.getElementById('togglePassword1');
+    const password1 = document.getElementById('{{ user_form.password1.id_for_label }}');
+    const eyeIcon1 = document.getElementById('eyeIcon1');
+
+    if (togglePassword1 && password1) {
+        togglePassword1.addEventListener('click', function() {
+            // تغيير نوع الحقل
+            const type = password1.getAttribute('type') === 'password' ? 'text' : 'password';
+            password1.setAttribute('type', type);
+
+            // تغيير أيقونة العين
+            if (type === 'text') {
+                eyeIcon1.classList.remove('fa-eye');
+                eyeIcon1.classList.add('fa-eye-slash');
+                togglePassword1.setAttribute('title', 'إخفاء كلمة المرور');
+            } else {
+                eyeIcon1.classList.remove('fa-eye-slash');
+                eyeIcon1.classList.add('fa-eye');
+                togglePassword1.setAttribute('title', 'عرض كلمة المرور');
+            }
+        });
+    }
+
+    // وظيفة عرض/إخفاء كلمة المرور الثانية (تأكيد كلمة المرور)
+    const togglePassword2 = document.getElementById('togglePassword2');
+    const password2 = document.getElementById('{{ user_form.password2.id_for_label }}');
+    const eyeIcon2 = document.getElementById('eyeIcon2');
+
+    if (togglePassword2 && password2) {
+        togglePassword2.addEventListener('click', function() {
+            // تغيير نوع الحقل
+            const type = password2.getAttribute('type') === 'password' ? 'text' : 'password';
+            password2.setAttribute('type', type);
+
+            // تغيير أيقونة العين
+            if (type === 'text') {
+                eyeIcon2.classList.remove('fa-eye');
+                eyeIcon2.classList.add('fa-eye-slash');
+                togglePassword2.setAttribute('title', 'إخفاء كلمة المرور');
+            } else {
+                eyeIcon2.classList.remove('fa-eye-slash');
+                eyeIcon2.classList.add('fa-eye');
+                togglePassword2.setAttribute('title', 'عرض كلمة المرور');
+            }
+        });
+    }
+
+    // إضافة تلميحات للأزرار
+    if (togglePassword1) {
+        togglePassword1.setAttribute('title', 'عرض كلمة المرور');
+    }
+    if (togglePassword2) {
+        togglePassword2.setAttribute('title', 'عرض كلمة المرور');
+    }
+
+    // التحقق من قوة كلمة المرور
+    if (password1) {
+        password1.addEventListener('input', function() {
+            const password = this.value;
+            let strengthIndicator = document.getElementById('passwordStrength');
+
+            if (!strengthIndicator) {
+                // إنشاء مؤشر قوة كلمة المرور
+                const indicator = document.createElement('div');
+                indicator.id = 'passwordStrength';
+                indicator.className = 'mt-2';
+                indicator.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small id="strengthText"></small>
+                        <small id="strengthTips" class="text-muted"></small>
+                    </div>
+                    <div class="strength-bar">
+                        <div id="strengthFill" class="strength-fill"></div>
+                    </div>
+                `;
+                this.parentNode.parentNode.appendChild(indicator);
+                strengthIndicator = indicator;
+            }
+
+            const strength = checkPasswordStrength(password);
+            const strengthText = document.getElementById('strengthText');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthTips = document.getElementById('strengthTips');
+
+            if (password.length === 0) {
+                strengthText.innerHTML = '';
+                strengthFill.style.width = '0%';
+                strengthTips.innerHTML = '';
+                return;
+            }
+
+            let text = '';
+            let textClass = '';
+            let fillWidth = '';
+            let fillColor = '';
+            let tips = '';
+
+            switch (strength) {
+                case 1:
+                    text = 'ضعيفة جداً';
+                    textClass = 'text-danger';
+                    fillWidth = '20%';
+                    fillColor = '#dc3545';
+                    tips = 'أضف أحرف كبيرة وأرقام';
+                    break;
+                case 2:
+                    text = 'ضعيفة';
+                    textClass = 'text-warning';
+                    fillWidth = '40%';
+                    fillColor = '#fd7e14';
+                    tips = 'أضف رموز خاصة';
+                    break;
+                case 3:
+                    text = 'متوسطة';
+                    textClass = 'text-info';
+                    fillWidth = '60%';
+                    fillColor = '#0dcaf0';
+                    tips = 'جيدة، يمكن تحسينها';
+                    break;
+                case 4:
+                    text = 'قوية';
+                    textClass = 'text-success';
+                    fillWidth = '80%';
+                    fillColor = '#198754';
+                    tips = 'ممتازة!';
+                    break;
+                case 5:
+                    text = 'قوية جداً';
+                    textClass = 'text-success fw-bold';
+                    fillWidth = '100%';
+                    fillColor = '#146c43';
+                    tips = 'مثالية! 🔒';
+                    break;
+            }
+
+            strengthText.innerHTML = `قوة كلمة المرور: ${text}`;
+            strengthText.className = textClass;
+            strengthFill.style.width = fillWidth;
+            strengthFill.style.backgroundColor = fillColor;
+            strengthTips.innerHTML = tips;
+        });
+    }
+
+    // دالة فحص قوة كلمة المرور
+    function checkPasswordStrength(password) {
+        let strength = 0;
+
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]/)) strength++;
+        if (password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+        return strength;
+    }
+});
+</script>
+{% endblock %}

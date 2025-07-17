@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-undo text-danger"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">تفاصيل مرتجع المشتريات</p>
+        </div>
+        <div>
+            <a href="{% url 'purchase_invoice_detail' purchase_return.original_invoice.pk %}" class="btn btn-info me-2">
+                <i class="fas fa-file-invoice"></i> الفاتورة الأصلية
+            </a>
+            <a href="{% url 'purchase_return_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات المرتجع -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات المرتجع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>رقم المرتجع:</strong></td>
+                                <td><span class="badge bg-danger fs-6">{{ purchase_return.return_number }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاريخ المرتجع:</strong></td>
+                                <td>{{ purchase_return.return_date|date:"Y/m/d" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>تم الإنشاء بواسطة:</strong></td>
+                                <td>{{ purchase_return.created_by.get_full_name|default:purchase_return.created_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>وقت الإنشاء:</strong></td>
+                                <td>{{ purchase_return.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>الفاتورة الأصلية:</strong></td>
+                                <td>
+                                    <a href="{% url 'purchase_invoice_detail' purchase_return.original_invoice.pk %}" class="btn btn-sm btn-outline-primary">
+                                        {{ purchase_return.original_invoice.invoice_number }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>المورد:</strong></td>
+                                <td>{{ purchase_return.original_invoice.supplier.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>إجمالي قيمة المرتجع:</strong></td>
+                                <td><span class="text-danger fw-bold fs-5">{{ purchase_return.total_amount|currency }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <strong>سبب المرتجع:</strong>
+                    <div class="bg-light p-3 rounded mt-2">
+                        {{ purchase_return.reason }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie"></i>
+                    ملخص المرتجع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-boxes fa-3x text-danger mb-2"></i>
+                        <h4>{{ purchase_return.items.count }}</h4>
+                        <small class="text-muted">عدد المنتجات المرتجعة</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <i class="fas fa-minus-circle fa-2x text-danger mb-2"></i>
+                        <h5 class="text-danger">تم خصم من المخزون</h5>
+                        <small class="text-muted">الكميات المرتجعة خُصمت من المخزون</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- عناصر المرتجع -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i>
+                    عناصر المرتجع
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if purchase_return.items.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>المنتج</th>
+                                    <th>الكمية الأصلية</th>
+                                    <th>الكمية المرتجعة</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>إجمالي المرتجع</th>
+                                    <th>المخزون الحالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in purchase_return.items.all %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong><br>
+                                        <small class="text-muted">{{ item.product.description|truncatechars:50 }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ item.original_item.quantity }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ item.returned_quantity }}</span>
+                                    </td>
+                                    <td>{{ item.unit_price|currency }}</td>
+                                    <td class="text-danger fw-bold">{{ item.total_price|currency }}</td>
+                                    <td>
+                                        {% if item.product.is_low_stock %}
+                                            <span class="badge bg-danger">{{ item.product.quantity }}</span>
+                                            <small class="text-danger d-block">مخزون منخفض</small>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ item.product.quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="5" class="text-end">الإجمالي:</th>
+                                    <th class="text-danger fs-5">{{ purchase_return.total_amount|currency }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد عناصر في هذا المرتجع</h5>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        معلومات مهمة:
+                    </h6>
+                    <ul class="mb-0">
+                        <li>تم خصم جميع الكميات المرتجعة من المخزون تلقائياً</li>
+                        <li>يمكن الرجوع للفاتورة الأصلية لمراجعة التفاصيل</li>
+                        <li>هذا المرتجع لا يمكن تعديله أو حذفه بعد الإنشاء</li>
+                        <li>تاريخ المرتجع يُستخدم في التقارير المالية</li>
+                        <li>تأكد من إبلاغ المورد بالمرتجع وترتيب استرداد المبلغ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+@media print {
+    .btn, .page-header .d-flex > div:last-child {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

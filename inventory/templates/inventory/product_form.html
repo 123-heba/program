@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-box text-primary"></i>
+                {{ title }}
+            </h1>
+            <p class="text-muted mb-0">
+                {% if product %}تعديل بيانات المنتج{% else %}إضافة منتج جديد إلى المخزون{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للقائمة
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit"></i>
+                    بيانات المنتج
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.supplier.id_for_label }}" class="form-label">
+                                {{ form.supplier.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.supplier }}
+                            {% if form.supplier.errors %}
+                                <div class="text-danger small">{{ form.supplier.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.price.id_for_label }}" class="form-label">
+                                {{ form.price.label }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.price }}
+                                <span class="input-group-text">{% currency_symbol %}</span>
+                            </div>
+                            {% if form.price.errors %}
+                                <div class="text-danger small">{{ form.price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                {{ form.quantity.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="text-danger small">{{ form.quantity.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.min_quantity.id_for_label }}" class="form-label">
+                                {{ form.min_quantity.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.min_quantity }}
+                            {% if form.min_quantity.errors %}
+                                <div class="text-danger small">{{ form.min_quantity.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if product %}
+                        <div class="alert alert-info">
+                            <strong>معلومات إضافية:</strong><br>
+                            تاريخ الإنشاء: {{ product.created_at|date:"Y-m-d H:i" }}<br>
+                            آخر تحديث: {{ product.updated_at|date:"Y-m-d H:i" }}<br>
+                            القيمة الإجمالية: {{ product.total_value|currency }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if product %}تحديث المنتج{% else %}إضافة المنتج{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// حساب القيمة الإجمالية عند تغيير السعر أو الكمية
+document.addEventListener('DOMContentLoaded', function() {
+    const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+    const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+    
+    function updateTotalValue() {
+        const price = parseFloat(priceInput.value) || 0;
+        const quantity = parseInt(quantityInput.value) || 0;
+        const total = price * quantity;
+        
+        // يمكن إضافة عرض القيمة الإجمالية هنا
+        console.log('القيمة الإجمالية:', total.toFixed(2));
+    }
+    
+    priceInput.addEventListener('input', updateTotalValue);
+    quantityInput.addEventListener('input', updateTotalValue);
+});
+</script>
+{% endblock %}
+

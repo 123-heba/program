@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-undo text-warning"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">إنشاء مرتجع للبضاعة المباعة - سيتم إضافة الكمية للمخزون</p>
+        </div>
+        <div>
+            <a href="{% url 'sale_invoice_detail' original_invoice.pk %}" class="btn btn-info me-2">
+                <i class="fas fa-eye"></i> عرض الفاتورة الأصلية
+            </a>
+            <a href="{% url 'sale_invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للفواتير
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- عرض الرسائل -->
+{% if messages %}
+    <div class="row mb-3">
+        <div class="col-12">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'error' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<!-- معلومات الفاتورة الأصلية -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-invoice"></i>
+                    معلومات الفاتورة الأصلية
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>رقم الفاتورة:</strong><br>
+                        <span class="badge bg-primary fs-6">{{ original_invoice.invoice_number }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>العميل:</strong><br>
+                        {{ original_invoice.customer.name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>تاريخ الفاتورة:</strong><br>
+                        {{ original_invoice.date|date:"Y/m/d H:i" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>إجمالي الفاتورة:</strong><br>
+                        <span class="text-success fw-bold">{{ original_invoice.total_amount|currency }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نموذج المرتجع -->
+<form method="post" id="returnForm">
+    {% csrf_token %}
+    
+    <!-- سبب المرتجع -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comment-alt"></i>
+                        سبب المرتجع
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <div class="text-danger mt-2">{{ form.reason.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- عناصر الفاتورة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes"></i>
+                        عناصر الفاتورة - حدد الكميات المرتجعة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>تنبيه:</strong> حدد الكمية المرتجعة لكل منتج. الكمية المرتجعة ستتم إضافتها للمخزون.
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الكمية الأصلية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي الأصلي</th>
+                                    <th>الكمية المرتجعة</th>
+                                    <th>إجمالي المرتجع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in original_invoice.items.all %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong><br>
+                                        <small class="text-muted">المخزون الحالي: {{ item.product.quantity }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ item.quantity }}</span>
+                                    </td>
+                                    <td>{{ item.unit_price|currency }}</td>
+                                    <td>{{ item.total_price|currency }}</td>
+                                    <td>
+                                        <input type="number" 
+                                               name="returned_quantity_{{ item.id }}" 
+                                               class="form-control returned-quantity"
+                                               min="0" 
+                                               max="{{ item.quantity }}"
+                                               value="0"
+                                               data-price="{{ item.unit_price }}"
+                                               data-item-id="{{ item.id }}">
+                                        <small class="text-muted">الحد الأقصى: {{ item.quantity }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="return-total fw-bold text-success" id="total_{{ item.id }}">0.00 {% currency_symbol %}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="5" class="text-end">إجمالي قيمة المرتجع:</th>
+                                    <th>
+                                        <span id="grandTotal" class="text-success fs-5">0.00 {% currency_symbol %}</span>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- أزرار التحكم -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% url 'sale_invoice_detail' original_invoice.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-warning me-2" onclick="clearAll()">
+                        <i class="fas fa-eraser"></i> مسح الكل
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                        <i class="fas fa-check"></i> إنشاء المرتجع
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const returnQuantityInputs = document.querySelectorAll('.returned-quantity');
+    const submitBtn = document.getElementById('submitBtn');
+    const grandTotalElement = document.getElementById('grandTotal');
+    
+    // تحديث الحسابات عند تغيير الكمية
+    returnQuantityInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateCalculations();
+        });
+    });
+    
+    function updateCalculations() {
+        let grandTotal = 0;
+        let hasReturnedItems = false;
+        let hasErrors = false;
+
+        returnQuantityInputs.forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            const price = parseFloat(input.dataset.price);
+            const itemId = input.dataset.itemId;
+            const maxQuantity = parseInt(input.getAttribute('max'));
+
+            // التحقق من صحة الكمية
+            if (quantity > maxQuantity) {
+                input.classList.add('is-invalid');
+                hasErrors = true;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+
+            const total = quantity * price;
+
+            // تحديث إجمالي العنصر
+            const totalElement = document.getElementById(`total_${itemId}`);
+            if (totalElement) {
+                totalElement.textContent = total.toFixed(2) + ' {% currency_symbol %}';
+            }
+
+            grandTotal += total;
+
+            if (quantity > 0) {
+                hasReturnedItems = true;
+            }
+        });
+
+        // تحديث الإجمالي العام
+        if (grandTotalElement) {
+            grandTotalElement.textContent = grandTotal.toFixed(2) + ' {% currency_symbol %}';
+        }
+
+        // تفعيل/إلغاء تفعيل زر الإرسال
+        if (submitBtn) {
+            submitBtn.disabled = !hasReturnedItems || hasErrors;
+        }
+    }
+    
+    // مسح جميع الكميات
+    window.clearAll = function() {
+        returnQuantityInputs.forEach(input => {
+            input.value = 0;
+        });
+        updateCalculations();
+    };
+    
+    // تأكيد قبل الإرسال
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        const reason = document.querySelector('textarea[name="reason"]').value.trim();
+
+        if (!reason) {
+            e.preventDefault();
+            alert('يرجى كتابة سبب المرتجع');
+            document.querySelector('textarea[name="reason"]').focus();
+            return;
+        }
+
+        let hasReturnedItems = false;
+        let hasErrors = false;
+        let totalReturnValue = 0;
+
+        returnQuantityInputs.forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            const maxQuantity = parseInt(input.getAttribute('max'));
+            const price = parseFloat(input.dataset.price);
+
+            if (quantity > 0) {
+                hasReturnedItems = true;
+                totalReturnValue += quantity * price;
+
+                if (quantity > maxQuantity) {
+                    hasErrors = true;
+                }
+            }
+        });
+
+        if (!hasReturnedItems) {
+            e.preventDefault();
+            alert('يرجى تحديد كمية مرتجعة لمنتج واحد على الأقل');
+            return;
+        }
+
+        if (hasErrors) {
+            e.preventDefault();
+            alert('يوجد كميات مرتجعة أكبر من الكمية الأصلية. يرجى التصحيح.');
+            return;
+        }
+
+        const confirmed = confirm(`هل أنت متأكد من إنشاء هذا المرتجع؟\n\nقيمة المرتجع: ${totalReturnValue.toFixed(2)} {% currency_symbol %}\nسيتم إضافة الكميات المرتجعة للمخزون.`);
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.return-total {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table th {
+    background-color: #343a40 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.btn {
+    border-radius: 6px;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.badge {
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_tags %}
+
+{% block title %}باركودات المنتجات - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-barcode text-primary"></i> باركودات المنتجات</h2>
+            <p class="text-muted mb-0">عرض وطباعة باركودات جميع المنتجات</p>
+        </div>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-success" onclick="printAllBarcodes()">
+                <i class="fas fa-print"></i> طباعة الكل
+            </button>
+            <button type="button" class="btn btn-info" onclick="generateAllBarcodes()">
+                <i class="fas fa-sync"></i> إنشاء الكل
+            </button>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للمنتجات
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- فلاتر -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">البحث</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               placeholder="ابحث عن منتج..." value="{{ request.GET.search }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="supplier" class="form-label">المورد</label>
+                        <select class="form-select" id="supplier" name="supplier">
+                            <option value="">جميع الموردين</option>
+                            {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}" 
+                                        {% if request.GET.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ supplier.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="barcode_size" class="form-label">حجم الباركود</label>
+                        <select class="form-select" id="barcode_size" name="barcode_size">
+                            <option value="small" {% if request.GET.barcode_size == 'small' %}selected{% endif %}>صغير</option>
+                            <option value="medium" {% if request.GET.barcode_size == 'medium' or not request.GET.barcode_size %}selected{% endif %}>متوسط</option>
+                            <option value="large" {% if request.GET.barcode_size == 'large' %}selected{% endif %}>كبير</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> تطبيق
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-boxes fa-2x text-primary mb-2"></i>
+                <h4>{{ products.count }}</h4>
+                <small class="text-muted">إجمالي المنتجات</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-barcode fa-2x text-success mb-2"></i>
+                <h4 id="generated-count">0</h4>
+                <small class="text-muted">باركود تم إنشاؤه</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-print fa-2x text-info mb-2"></i>
+                <h4 id="ready-print-count">0</h4>
+                <small class="text-muted">جاهز للطباعة</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                <h4 id="progress-percent">0%</h4>
+                <small class="text-muted">نسبة الإنجاز</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- شبكة الباركودات -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-th"></i>
+                    شبكة الباركودات
+                </h5>
+            </div>
+            <div class="card-body" id="barcodes-grid">
+                {% if products %}
+                    <div class="row" id="barcode-items">
+                        {% for product in products %}
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                            <div class="card barcode-item">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ product.name|truncatechars:20 }}</h6>
+                                    <div class="barcode-container mb-3" id="barcode-{{ product.id }}">
+                                        <div class="text-muted">
+                                            <i class="fas fa-barcode fa-2x"></i>
+                                            <p class="small mt-2">انقر لإنشاء الباركود</p>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-2">{{ product.barcode_data }}</p>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-primary" 
+                                                onclick="generateSingleBarcode('{{ product.barcode_data }}', 'barcode-{{ product.id }}', {{ product.id }})">
+                                            <i class="fas fa-sync"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-success" 
+                                                onclick="printSingleBarcode('barcode-{{ product.id }}')">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-info" 
+                                                onclick="copyBarcodeData('{{ product.barcode_data }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-barcode fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد منتجات</h5>
+                        <p class="text-muted">ابدأ بإضافة منتجات لإنشاء الباركودات</p>
+                        <a href="{% url 'product_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> إضافة منتج جديد
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- شريط التقدم -->
+<div class="progress-container" id="progress-container" style="display: none;">
+    <div class="card mt-4">
+        <div class="card-body">
+            <h6>جاري إنشاء الباركودات...</h6>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted" id="progress-text">0 من {{ products.count }}</small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.barcode-item {
+    transition: transform 0.2s ease;
+    border: 1px solid #dee2e6;
+}
+
+.barcode-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.barcode-container {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+}
+
+.barcode-generated {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+@media print {
+    .page-header, .card-header, .btn, .progress-container {
+        display: none !important;
+    }
+    
+    .barcode-item {
+        break-inside: avoid;
+        margin-bottom: 10px;
+    }
+    
+    .col-lg-3, .col-md-4, .col-sm-6 {
+        width: 25% !important;
+        float: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- تحميل مولد الباركود -->
+<script src="{% static 'js/barcode-generator.js' %}"></script>
+
+<script>
+let generatedCount = 0;
+const totalCount = {{ products.count }};
+const barcodeSize = '{{ request.GET.barcode_size|default:"medium" }}';
+
+// إعدادات أحجام الباركود
+const sizeSettings = {
+    small: { width: 150, height: 40, fontSize: 10 },
+    medium: { width: 200, height: 60, fontSize: 12 },
+    large: { width: 250, height: 80, fontSize: 14 }
+};
+
+// إنشاء باركود واحد
+function generateSingleBarcode(barcodeData, containerId, productId) {
+    const container = document.getElementById(containerId);
+    const settings = sizeSettings[barcodeSize];
+    
+    generateSimpleBarcode(barcodeData, containerId, {
+        ...settings,
+        showText: true
+    });
+    
+    // تحديث مظهر الحاوية
+    container.classList.add('barcode-generated');
+    
+    // تحديث العدادات
+    updateCounters();
+}
+
+// إنشاء جميع الباركودات
+function generateAllBarcodes() {
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    progressContainer.style.display = 'block';
+    generatedCount = 0;
+    
+    const barcodeItems = document.querySelectorAll('[id^="barcode-"]');
+    
+    barcodeItems.forEach((container, index) => {
+        setTimeout(() => {
+            const productData = container.id.replace('barcode-', '');
+            const barcodeData = container.parentElement.querySelector('.text-muted').textContent.trim();
+            
+            if (barcodeData && barcodeData !== 'انقر لإنشاء الباركود') {
+                generateSingleBarcode(barcodeData, container.id, productData);
+            }
+            
+            // تحديث شريط التقدم
+            const progress = ((index + 1) / barcodeItems.length) * 100;
+            progressBar.style.width = progress + '%';
+            progressText.textContent = `${index + 1} من ${barcodeItems.length}`;
+            
+            // إخفاء شريط التقدم عند الانتهاء
+            if (index === barcodeItems.length - 1) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 1000);
+            }
+        }, index * 100); // تأخير 100ms بين كل باركود
+    });
+}
+
+// طباعة باركود واحد
+function printSingleBarcode(containerId) {
+    printBarcode(containerId);
+}
+
+// طباعة جميع الباركودات
+function printAllBarcodes() {
+    window.print();
+}
+
+// نسخ بيانات الباركود
+function copyBarcodeData(barcodeData) {
+    navigator.clipboard.writeText(barcodeData).then(function() {
+        // إظهار رسالة نجاح
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.remove('btn-info');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-info');
+        }, 2000);
+    }).catch(function(err) {
+        alert('فشل في نسخ البيانات');
+    });
+}
+
+// تحديث العدادات
+function updateCounters() {
+    const generatedBarcodes = document.querySelectorAll('.barcode-generated').length;
+    const readyForPrint = generatedBarcodes;
+    const progressPercent = totalCount > 0 ? Math.round((generatedBarcodes / totalCount) * 100) : 0;
+    
+    document.getElementById('generated-count').textContent = generatedBarcodes;
+    document.getElementById('ready-print-count').textContent = readyForPrint;
+    document.getElementById('progress-percent').textContent = progressPercent + '%';
+}
+
+// تحديث العدادات عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    updateCounters();
+});
+</script>
+{% endblock %}

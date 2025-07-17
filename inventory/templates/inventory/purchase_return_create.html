@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-undo text-danger"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">إنشاء مرتجع للبضاعة المشتراة - سيتم خصم الكمية من المخزون</p>
+        </div>
+        <div>
+            <a href="{% url 'purchase_invoice_detail' original_invoice.pk %}" class="btn btn-info me-2">
+                <i class="fas fa-eye"></i> عرض الفاتورة الأصلية
+            </a>
+            <a href="{% url 'purchase_invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للفواتير
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات الفاتورة الأصلية -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-invoice"></i>
+                    معلومات الفاتورة الأصلية
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>رقم الفاتورة:</strong><br>
+                        <span class="badge bg-primary fs-6">{{ original_invoice.invoice_number }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>المورد:</strong><br>
+                        {{ original_invoice.supplier.name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>تاريخ الفاتورة:</strong><br>
+                        {{ original_invoice.date|date:"Y/m/d H:i" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>إجمالي الفاتورة:</strong><br>
+                        <span class="text-success fw-bold">{{ original_invoice.total_amount|currency }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نموذج المرتجع -->
+<form method="post" id="returnForm">
+    {% csrf_token %}
+    
+    <!-- سبب المرتجع -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comment-alt"></i>
+                        سبب المرتجع
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <div class="text-danger mt-2">{{ form.reason.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- عناصر الفاتورة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes"></i>
+                        عناصر الفاتورة - حدد الكميات المرتجعة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>تنبيه:</strong> حدد الكمية المرتجعة لكل منتج. الكمية المرتجعة ستتم خصمها من المخزون.
+                        <br><strong>تأكد من توفر الكمية في المخزون قبل الإرجاع.</strong>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الكمية الأصلية</th>
+                                    <th>المخزون الحالي</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي الأصلي</th>
+                                    <th>الكمية المرتجعة</th>
+                                    <th>إجمالي المرتجع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in original_invoice.items.all %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong><br>
+                                        <small class="text-muted">{{ item.product.description|truncatechars:30 }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ item.quantity }}</span>
+                                    </td>
+                                    <td>
+                                        {% if item.product.quantity < item.quantity %}
+                                            <span class="badge bg-danger">{{ item.product.quantity }}</span>
+                                            <small class="text-danger d-block">غير كافي</small>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ item.product.quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.unit_price|currency }}</td>
+                                    <td>{{ item.total_price|currency }}</td>
+                                    <td>
+                                        <input type="number" 
+                                               name="returned_quantity_{{ item.id }}" 
+                                               class="form-control returned-quantity"
+                                               min="0" 
+                                               max="{{ item.product.quantity|add:0 }}"
+                                               value="0"
+                                               data-price="{{ item.unit_price }}"
+                                               data-item-id="{{ item.id }}"
+                                               data-max-original="{{ item.quantity }}"
+                                               data-max-stock="{{ item.product.quantity }}">
+                                        <small class="text-muted">
+                                            الحد الأقصى: {{ item.product.quantity|add:0 }}
+                                            (من أصل {{ item.quantity }})
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="return-total fw-bold text-danger" id="total_{{ item.id }}">0.00 {% currency_symbol %}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="6" class="text-end">إجمالي قيمة المرتجع:</th>
+                                    <th>
+                                        <span id="grandTotal" class="text-danger fs-5">0.00 {% currency_symbol %}</span>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- أزرار التحكم -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% url 'purchase_invoice_detail' original_invoice.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-warning me-2" onclick="clearAll()">
+                        <i class="fas fa-eraser"></i> مسح الكل
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="submitBtn" disabled>
+                        <i class="fas fa-check"></i> إنشاء المرتجع
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const returnQuantityInputs = document.querySelectorAll('.returned-quantity');
+    const submitBtn = document.getElementById('submitBtn');
+    const grandTotalElement = document.getElementById('grandTotal');
+    
+    // تحديث الحسابات عند تغيير الكمية
+    returnQuantityInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            validateAndUpdateCalculations();
+        });
+    });
+    
+    function validateAndUpdateCalculations() {
+        let grandTotal = 0;
+        let hasReturnedItems = false;
+        let hasErrors = false;
+        
+        returnQuantityInputs.forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            const price = parseFloat(input.dataset.price);
+            const itemId = input.dataset.itemId;
+            const maxOriginal = parseInt(input.dataset.maxOriginal);
+            const maxStock = parseInt(input.dataset.maxStock);
+            
+            // التحقق من صحة الكمية
+            if (quantity > maxOriginal) {
+                input.classList.add('is-invalid');
+                hasErrors = true;
+            } else if (quantity > maxStock) {
+                input.classList.add('is-invalid');
+                hasErrors = true;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+            
+            const total = quantity * price;
+            
+            // تحديث إجمالي العنصر
+            const totalElement = document.getElementById(`total_${itemId}`);
+            totalElement.textContent = total.toFixed(2) + ' {% currency_symbol %}';
+            
+            grandTotal += total;
+            
+            if (quantity > 0) {
+                hasReturnedItems = true;
+            }
+        });
+        
+        // تحديث الإجمالي العام
+        grandTotalElement.textContent = grandTotal.toFixed(2) + ' {% currency_symbol %}';
+        
+        // تفعيل/إلغاء تفعيل زر الإرسال
+        submitBtn.disabled = !hasReturnedItems || hasErrors;
+    }
+    
+    // مسح جميع الكميات
+    window.clearAll = function() {
+        returnQuantityInputs.forEach(input => {
+            input.value = 0;
+            input.classList.remove('is-invalid');
+        });
+        validateAndUpdateCalculations();
+    };
+    
+    // تأكيد قبل الإرسال
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        const reason = document.querySelector('textarea[name="reason"]').value.trim();
+        
+        if (!reason) {
+            e.preventDefault();
+            alert('يرجى كتابة سبب المرتجع');
+            return;
+        }
+        
+        let hasReturnedItems = false;
+        let hasStockIssues = false;
+        
+        returnQuantityInputs.forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            const maxStock = parseInt(input.dataset.maxStock);
+            
+            if (quantity > 0) {
+                hasReturnedItems = true;
+                if (quantity > maxStock) {
+                    hasStockIssues = true;
+                }
+            }
+        });
+        
+        if (!hasReturnedItems) {
+            e.preventDefault();
+            alert('يرجى تحديد كمية مرتجعة لمنتج واحد على الأقل');
+            return;
+        }
+        
+        if (hasStockIssues) {
+            e.preventDefault();
+            alert('بعض الكميات المرتجعة أكبر من المتوفر في المخزون');
+            return;
+        }
+        
+        const confirmed = confirm('هل أنت متأكد من إنشاء هذا المرتجع؟\n\nسيتم خصم الكميات المرتجعة من المخزون.');
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

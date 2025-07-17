@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}الموردين - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-truck text-primary"></i>
+                إدارة الموردين
+            </h1>
+            <p class="text-muted mb-0">عرض وإدارة جميع الموردين</p>
+        </div>
+        <a href="{% url 'supplier_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> إضافة مورد جديد
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-8">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="ابحث عن مورد..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> بحث
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Suppliers Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">قائمة الموردين ({{ suppliers.count }} مورد)</h5>
+    </div>
+    <div class="card-body">
+        {% if suppliers %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>الرقم التعريفي</th>
+                            <th>اسم المورد</th>
+                            <th>رقم الهاتف</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td>{{ supplier.id }}</td>
+                            <td>
+                                <strong>{{ supplier.name }}</strong>
+                                {% if supplier.address %}
+                                    <br><small class="text-muted">{{ supplier.address|truncatechars:50 }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ supplier.phone }}</td>
+                            <td>{{ supplier.email|default:"-" }}</td>
+                            <td>{{ supplier.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'supplier_edit' supplier.id %}" 
+                                       class="btn btn-sm btn-outline-success" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="confirmDelete('{{ supplier.name }}', '{% url 'supplier_delete' supplier.id %}')" 
+                                            title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد موردين</h5>
+                <p class="text-muted">ابدأ بإضافة مورد جديد</p>
+                <a href="{% url 'supplier_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> إضافة مورد جديد
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المورد "<span id="deleteItemName"></span>"؟</p>
+                <p class="text-danger"><strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}
+

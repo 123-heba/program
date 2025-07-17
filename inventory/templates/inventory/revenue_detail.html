@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-arrow-up text-success"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">عرض تفاصيل الإيراد</p>
+        </div>
+        <div class="btn-group" role="group">
+            {% if not revenue.sale_invoice %}
+                <a href="{% url 'revenue_edit' revenue.pk %}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> تعديل الإيراد
+                </a>
+                <button type="button" class="btn btn-danger" 
+                        onclick="confirmDelete('{{ revenue.reference_number }}', '{% url 'revenue_delete' revenue.pk %}')">
+                    <i class="fas fa-trash"></i> حذف الإيراد
+                </button>
+            {% endif %}
+            <a href="{% url 'revenue_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات الإيراد -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات الإيراد
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>رقم المرجع:</strong></td>
+                                <td><span class="badge bg-success fs-6">{{ revenue.reference_number }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>عنوان الإيراد:</strong></td>
+                                <td>{{ revenue.title }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>الفئة:</strong></td>
+                                <td>
+                                    {% if revenue.category %}
+                                        <span class="badge bg-info">{{ revenue.category.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted">غير محدد</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>نوع الإيراد:</strong></td>
+                                <td><span class="badge bg-secondary">{{ revenue.get_revenue_type_display }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>طريقة الدفع:</strong></td>
+                                <td><span class="badge bg-primary">{{ revenue.get_payment_method_display }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>المبلغ:</strong></td>
+                                <td><span class="text-success fw-bold fs-4">{{ revenue.amount|currency }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاريخ الإيراد:</strong></td>
+                                <td>{{ revenue.date|date:"Y/m/d" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>اسم العميل:</strong></td>
+                                <td>{{ revenue.customer_name|default:"غير محدد" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>تم الإنشاء بواسطة:</strong></td>
+                                <td>{{ revenue.created_by.get_full_name|default:revenue.created_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاريخ الإنشاء:</strong></td>
+                                <td>{{ revenue.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if revenue.description %}
+                <div class="mt-3">
+                    <strong>الوصف:</strong>
+                    <div class="bg-light p-3 rounded mt-2">
+                        {{ revenue.description }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if revenue.notes %}
+                <div class="mt-3">
+                    <strong>ملاحظات:</strong>
+                    <div class="bg-light p-3 rounded mt-2">
+                        {{ revenue.notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie"></i>
+                    ملخص الإيراد
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-arrow-up fa-3x text-success mb-2"></i>
+                    <h3 class="text-success">{{ revenue.amount|currency }}</h3>
+                    <small class="text-muted">قيمة الإيراد</small>
+                </div>
+                
+                <div class="mb-3">
+                    {% if revenue.sale_invoice %}
+                        <i class="fas fa-link fa-2x text-info mb-2"></i>
+                        <h6 class="text-info">مرتبط بفاتورة مبيعات</h6>
+                        <small class="text-muted">إيراد تلقائي من المبيعات</small>
+                    {% else %}
+                        <i class="fas fa-hand-holding-usd fa-2x text-warning mb-2"></i>
+                        <h6 class="text-warning">إيراد يدوي</h6>
+                        <small class="text-muted">تم إضافته يدوياً</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <i class="fas fa-calendar fa-2x text-primary mb-2"></i>
+                    <h6>{{ revenue.date|date:"Y/m/d" }}</h6>
+                    <small class="text-muted">تاريخ الإيراد</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الفاتورة المرتبطة -->
+{% if revenue.sale_invoice %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    الفاتورة المرتبطة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>رقم الفاتورة:</strong><br>
+                        <span class="badge bg-primary fs-6">{{ revenue.sale_invoice.invoice_number }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>العميل:</strong><br>
+                        {{ revenue.sale_invoice.customer.name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>تاريخ الفاتورة:</strong><br>
+                        {{ revenue.sale_invoice.date|date:"Y/m/d" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>إجمالي الفاتورة:</strong><br>
+                        <span class="text-success fw-bold">{{ revenue.sale_invoice.total_amount|currency }}</span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'sale_invoice_detail' revenue.sale_invoice.pk %}" class="btn btn-primary">
+                        <i class="fas fa-eye"></i> عرض تفاصيل الفاتورة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- معلومات إضافية -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-success" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i>
+                        معلومات مهمة:
+                    </h6>
+                    <ul class="mb-0">
+                        {% if revenue.sale_invoice %}
+                            <li>هذا الإيراد مرتبط بفاتورة مبيعات ولا يمكن تعديله أو حذفه</li>
+                            <li>تم إنشاؤه تلقائياً عند إنشاء فاتورة المبيعات</li>
+                            <li>أي تعديل على الفاتورة سينعكس على هذا الإيراد تلقائياً</li>
+                        {% else %}
+                            <li>هذا إيراد يدوي يمكن تعديله أو حذفه</li>
+                            <li>يمكن استخدامه لتسجيل إيرادات أخرى غير المبيعات</li>
+                            <li>تأكد من دقة البيانات المدخلة للحصول على تقارير صحيحة</li>
+                        {% endif %}
+                        <li>يظهر هذا الإيراد في جميع التقارير المالية</li>
+                        <li>يُستخدم في حساب إجمالي الإيرادات والأرباح</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if not revenue.sale_invoice %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الإيراد "<span id="deleteItemName"></span>"؟</p>
+                <p class="text-danger"><strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if not revenue.sale_invoice %}
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+@media print {
+    .btn, .page-header .d-flex > div:last-child {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

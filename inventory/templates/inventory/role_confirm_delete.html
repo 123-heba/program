@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}حذف الدور - {{ role.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-trash text-danger"></i> حذف الدور الوظيفي</h2>
+            <p class="text-muted mb-0">تأكيد حذف الدور من النظام</p>
+        </div>
+        <a href="{% url 'role_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للقائمة
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تحذير - حذف الدور الوظيفي
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if employees_count > 0 %}
+                <!-- تحذير: الدور مرتبط بموظفين -->
+                <div class="alert alert-danger" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-ban"></i>
+                        لا يمكن حذف هذا الدور!
+                    </h6>
+                    <p class="mb-0">
+                        هذا الدور مرتبط بـ <strong>{{ employees_count }}</strong> موظف. 
+                        يجب إلغاء ربط جميع الموظفين بهذا الدور قبل حذفه.
+                    </p>
+                </div>
+                
+                <!-- قائمة الموظفين المرتبطين -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">الموظفين المرتبطين بهذا الدور</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>رقم الموظف</th>
+                                        <th>الاسم</th>
+                                        <th>القسم</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in role.employee_set.all %}
+                                    <tr>
+                                        <td>{{ employee.employee_id }}</td>
+                                        <td>{{ employee.full_name }}</td>
+                                        <td>{{ employee.department|default:"غير محدد" }}</td>
+                                        <td>
+                                            {% if employee.is_active_employee %}
+                                                <span class="badge bg-success">نشط</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">غير نشط</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'role_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right"></i> العودة للقائمة
+                    </a>
+                    <a href="{% url 'role_detail' role.pk %}" class="btn btn-info">
+                        <i class="fas fa-eye"></i> عرض تفاصيل الدور
+                    </a>
+                </div>
+                
+                {% else %}
+                <!-- يمكن حذف الدور -->
+                <div class="alert alert-danger" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-circle"></i>
+                        هل أنت متأكد من حذف هذا الدور؟
+                    </h6>
+                    <p class="mb-0">
+                        هذا الإجراء لا يمكن التراجع عنه. سيتم حذف الدور نهائياً من النظام.
+                    </p>
+                </div>
+
+                <!-- تفاصيل الدور -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">تفاصيل الدور المراد حذفه</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>اسم الدور:</strong></td>
+                                        <td>{{ role.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>الحالة:</strong></td>
+                                        <td>
+                                            {% if role.is_active %}
+                                                <span class="badge bg-success">نشط</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">غير نشط</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>عدد الصلاحيات:</strong></td>
+                                        <td>{{ role.permissions.count }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>تاريخ الإنشاء:</strong></td>
+                                        <td>{{ role.created_at|date:"Y/m/d H:i" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>آخر تحديث:</strong></td>
+                                        <td>{{ role.updated_at|date:"Y/m/d H:i" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>عدد الموظفين:</strong></td>
+                                        <td>{{ employees_count }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        {% if role.description %}
+                        <div class="mt-3">
+                            <strong>الوصف:</strong>
+                            <p class="text-muted">{{ role.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- نموذج التأكيد -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{% url 'role_list' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                            <a href="{% url 'role_detail' role.pk %}" class="btn btn-info">
+                                <i class="fas fa-eye"></i> عرض التفاصيل
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> تأكيد الحذف
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-info-circle text-info"></i>
+                    معلومات مهمة قبل الحذف
+                </h6>
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> تأكد من عدم وجود موظفين مرتبطين بهذا الدور</li>
+                    <li><i class="fas fa-check text-success"></i> يمكنك إيقاف الدور مؤقتاً بدلاً من حذفه</li>
+                    <li><i class="fas fa-check text-success"></i> احتفظ بنسخة احتياطية من البيانات إذا لزم الأمر</li>
+                    <li><i class="fas fa-check text-success"></i> يمكنك إنشاء دور جديد بنفس الصلاحيات لاحقاً</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تأكيد إضافي عند الضغط على زر الحذف
+    const deleteForm = document.querySelector('form[method="post"]');
+    if (deleteForm) {
+        const deleteButton = deleteForm.querySelector('button[type="submit"]');
+        
+        deleteButton.addEventListener('click', function(e) {
+            const confirmed = confirm('هل أنت متأكد تماماً من حذف هذا الدور؟\n\nهذا الإجراء لا يمكن التراجع عنه!');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}التقارير - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-chart-bar text-primary"></i>
+                التقارير والإحصائيات
+            </h1>
+            <p class="text-muted mb-0">تقارير شاملة عن أداء المخزون والمبيعات</p>
+        </div>
+        <div>
+            <button class="btn btn-success" onclick="exportReport('excel')">
+                <i class="fas fa-file-excel"></i> تصدير Excel
+            </button>
+           <button class="btn btn-danger" onclick="printCurrentReport()">
+    <i class="fas fa-print"></i> طباعة التقرير
+</button>
+
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات الشهر الحالي -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            مبيعات {{ current_month|date:"F Y" }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ monthly_sales.total|default:0|currency }}
+                        </div>
+                        <small class="text-muted">عدد الفواتير: {{ monthly_sales.count|default:0 }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-cart fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            مشتريات {{ current_month|date:"F Y" }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ monthly_purchases.total|default:0|currency }}
+                        </div>
+                        <small class="text-muted">عدد الفواتير: {{ monthly_purchases.count|default:0 }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-bag fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الرسم البياني للمبيعات والمشتريات -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line text-primary"></i>
+                    تقرير المبيعات والمشتريات آخر 6 أشهر
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesPurchasesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- المنتجات الأكثر مبيعاً -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy text-warning"></i>
+                    المنتجات الأكثر مبيعاً
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if top_selling_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>الترتيب</th>
+                                    <th>اسم المنتج</th>
+                                    <th>الكمية المباعة</th>
+                                    <th>إجمالي الإيرادات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_selling_products %}
+                                <tr>
+                                    <td>
+                                        {% if forloop.counter <= 3 %}
+                                            <span class="badge bg-warning">{{ forloop.counter }}</span>
+                                        {% else %}
+                                            {{ forloop.counter }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ product.product__name }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ product.total_quantity }}</span>
+                                    </td>
+                                    <td>{{ product.total_revenue|currency }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد بيانات مبيعات</h5>
+                        <p class="text-muted">ابدأ ببيع المنتجات لرؤية الإحصائيات</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie text-info"></i>
+                    ملخص سريع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>إجمالي المنتجات:</span>
+                        <strong>{{ total_products }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>الموردين النشطين:</span>
+                        <strong>{{ total_suppliers }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>العملاء المسجلين:</span>
+                        <strong>{{ total_customers }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>منتجات بمخزون منخفض:</span>
+                        <strong class="text-danger">{{ low_stock_products.count }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- المنتجات منخفضة المخزون -->
+{% if low_stock_products %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تقرير المنتجات منخفضة المخزون
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>اسم المنتج</th>
+                                <th>الكمية الحالية</th>
+                                <th>الحد الأدنى</th>
+                                <th>المورد</th>
+                                <th>قيمة المخزون</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr class="{% if product.quantity == 0 %}table-danger{% else %}table-warning{% endif %}">
+                                <td>{{ product.name }}</td>
+                                <td>
+                                    {% if product.quantity == 0 %}
+                                        <span class="badge bg-danger">نفد المخزون</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ product.quantity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.min_quantity }}</td>
+                                <td>{{ product.supplier.name }}</td>
+                                <td>{{ product.total_value|currency }}</td>
+                                <td>
+                                    {% if product.quantity == 0 %}
+                                        <span class="badge bg-danger">نفد المخزون</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">مخزون منخفض</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- فلتر التقارير -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter text-primary"></i>
+                    تقارير مخصصة
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" 
+                               value="{{ request.GET.start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" 
+                               value="{{ request.GET.end_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="report_type" class="form-label">نوع التقرير</label>
+                        <select class="form-select" id="report_type" name="report_type">
+                            <option value="sales">تقرير المبيعات</option>
+                            <option value="purchases">تقرير المشتريات</option>
+                            <option value="inventory">تقرير المخزون</option>
+                            <option value="low_stock">المنتجات منخفضة المخزون</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> إنشاء التقرير
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card.success {
+    border-left: 4px solid #28a745;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// بيانات الرسم البياني
+const salesData = {{ sales_chart_data|safe }};
+const purchasesData = {{ purchases_chart_data|safe }};
+const monthsLabels = {{ months_labels|safe }};
+
+// إنشاء الرسم البياني
+const ctx = document.getElementById('salesPurchasesChart').getContext('2d');
+const salesPurchasesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: monthsLabels,
+        datasets: [{
+            label: 'المبيعات ({% currency_symbol %})',
+            data: salesData,
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'المشتريات ({% currency_symbol %})',
+            data: purchasesData,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            title: {
+                display: true,
+                text: 'تقرير المبيعات والمشتريات آخر 6 أشهر',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                }
+            },
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString() + ' {% currency_symbol %}';
+                    }
+                }
+            }
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
+        elements: {
+            point: {
+                radius: 6,
+                hoverRadius: 8
+            }
+        }
+    }
+});
+
+function exportReport(format) {
+    if (format === 'excel') {
+        // يمكن إضافة رابط تصدير Excel هنا
+        alert('ميزة تصدير Excel قيد التطوير');
+    } else if (format === 'pdf') {
+        // يمكن إضافة رابط تصدير PDF هنا
+        alert('ميزة تصدير PDF قيد التطوير');
+    }
+}
+
+function printCurrentReport() {
+    window.print();
+}
+
+// تحديث الرسم البياني عند تغيير حجم النافذة
+window.addEventListener('resize', function() {
+    salesPurchasesChart.resize();
+});
+</script>
+
+{% endblock %}
+

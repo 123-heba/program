@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}تفاصيل المنتج - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-box-open text-primary"></i>
+                تفاصيل المنتج: {{ product.name }}
+            </h1>
+            <p class="text-muted mb-0">عرض معلومات المنتج ومعاملاته</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'product_edit' product.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> تعديل المنتج
+            </a>
+            <button type="button" class="btn btn-danger" 
+                    onclick="confirmDelete('{{ product.name }}', '{% url 'product_delete' product.id %}')">
+                <i class="fas fa-trash"></i> حذف المنتج
+            </button>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للمنتجات
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات المنتج</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>الرقم التعريفي:</strong> {{ product.id }}</p>
+                <p><strong>الاسم:</strong> {{ product.name }}</p>
+                <p><strong>الوصف:</strong> {{ product.description|default:"لا يوجد" }}</p>
+                <p><strong>السعر:</strong> {{ product.price|currency }}</p>
+                <p><strong>الكمية في المخزون:</strong> <span class="badge bg-{% if product.quantity <= product.min_quantity %}danger{% else %}success{% endif %}">{{ product.quantity }}</span></p>
+                <p><strong>الحد الأدنى للمخزون:</strong> {{ product.min_quantity }}</p>
+                <p><strong>المورد المرتبط:</strong> 
+                    {% if product.supplier %}
+                        <a href="{% url 'supplier_list' %}?search={{ product.supplier.name }}">{{ product.supplier.name }}</a>
+                    {% else %}
+                        لا يوجد
+                    {% endif %}
+                </p>
+                <p><strong>تاريخ الإضافة:</strong> {{ product.created_at|date:"Y-m-d H:i" }}</p>
+                <p><strong>آخر تحديث:</strong> {{ product.updated_at|date:"Y-m-d H:i" }}</p>
+                <p><strong>القيمة الإجمالية للمخزون:</strong> {{ product.total_value|currency }}</p>
+            </div>
+        </div>
+
+        <!-- قسم الباركود -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-barcode"></i>
+                    الباركود
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div id="barcode-container"></div>
+                </div>
+                <div class="mb-3">
+                    <p class="mb-1"><strong>رقم الباركود:</strong></p>
+                    <code class="fs-6">{{ product.barcode_data }}</code>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="generateProductBarcode()">
+                        <i class="fas fa-sync"></i> إنشاء الباركود
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="printBarcode('barcode-container')">
+                        <i class="fas fa-print"></i> طباعة الباركود
+                    </button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="copyBarcodeData()">
+                        <i class="fas fa-copy"></i> نسخ الرقم
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">آخر معاملات الشراء</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_purchases %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in recent_purchases %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    فاتورة شراء #{{ item.invoice.invoice_number }} من {{ item.invoice.supplier.name }}
+                                    <br><small class="text-muted">الكمية: {{ item.quantity }}، السعر: {{ item.unit_price|currency }}</small>
+                                </div>
+                                <span class="badge bg-info rounded-pill">{{ item.invoice.created_at|date:"Y-m-d" }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">لا توجد معاملات شراء حديثة لهذا المنتج.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">آخر معاملات البيع</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sales %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in recent_sales %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    فاتورة بيع #{{ item.invoice.invoice_number }} إلى {{ item.invoice.customer.name }}
+                                    <br><small class="text-muted">الكمية: {{ item.quantity }}، السعر: {{ item.unit_price|currency }}</small>
+                                </div>
+                                <span class="badge bg-success rounded-pill">{{ item.invoice.created_at|date:"Y-m-d" }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">لا توجد معاملات بيع حديثة لهذا المنتج.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المنتج "<span id="deleteItemName"></span>"؟</p>
+                <p class="text-danger"><strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- تحميل مولد الباركود -->
+<script src="{% load static %}{% static 'js/barcode-generator.js' %}"></script>
+
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// متغيرات الباركود
+const productBarcodeData = '{{ product.barcode_data }}';
+const productName = '{{ product.name }}';
+
+// إنشاء الباركود عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    generateProductBarcode();
+});
+
+// دالة إنشاء باركود المنتج
+function generateProductBarcode() {
+    generateSimpleBarcode(productBarcodeData, 'barcode-container', {
+        width: 250,
+        height: 60,
+        fontSize: 14,
+        showText: true
+    });
+}
+
+// دالة نسخ رقم الباركود
+function copyBarcodeData() {
+    navigator.clipboard.writeText(productBarcodeData).then(function() {
+        // إظهار رسالة نجاح
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
+        btn.classList.remove('btn-info');
+        btn.classList.add('btn-success');
+
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-info');
+        }, 2000);
+    }).catch(function(err) {
+        alert('فشل في نسخ رقم الباركود: ' + err);
+    });
+}
+
+// دالة إنشاء باركود مخصص
+function generateCustomBarcode() {
+    const customText = prompt('أدخل النص المراد تحويله إلى باركود:', productBarcodeData);
+    if (customText && customText.trim()) {
+        generateSimpleBarcode(customText.trim(), 'barcode-container', {
+            width: 250,
+            height: 60,
+            fontSize: 14,
+            showText: true
+        });
+    }
+}
+
+// دالة تحميل الباركود كصورة
+function downloadBarcode() {
+    const container = document.getElementById('barcode-container');
+    if (!container) return;
+
+    // إنشاء canvas لتحويل الباركود إلى صورة
+    html2canvas(container).then(function(canvas) {
+        const link = document.createElement('a');
+        link.download = `barcode_${productBarcodeData}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }).catch(function(err) {
+        alert('فشل في تحميل الباركود كصورة');
+    });
+}
+</script>
+{% endblock %}
+

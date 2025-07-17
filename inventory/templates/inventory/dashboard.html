@@ -1,0 +1,1137 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}لوحة التحكم - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <i class="fas fa-tachometer-alt text-primary"></i>
+                        مرحباً بك في لوحة التحكم
+                    </h1>
+                    <p class="hero-subtitle">نظرة شاملة على أداء نظام إدارة المخزون</p>
+                    <div class="hero-stats">
+                        <span class="badge bg-primary me-2">
+                            <i class="fas fa-calendar"></i> {{ today|date:"Y/m/d" }}
+                        </span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-clock"></i> آخر تحديث: الآن
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="hero-actions">
+                    <div class="quick-actions">
+                        <h6 class="text-muted mb-3">إجراءات سريعة</h6>
+                        <a href="{% url 'sale_invoice_create' %}" class="btn btn-gradient-success btn-lg mb-2">
+                            <i class="fas fa-plus-circle"></i> فاتورة بيع جديدة
+                        </a>
+                        <a href="{% url 'purchase_invoice_create' %}" class="btn btn-gradient-info btn-lg mb-2">
+                            <i class="fas fa-shopping-cart"></i> فاتورة شراء جديدة
+                        </a>
+                        <a href="{% url 'product_create' %}" class="btn btn-gradient-warning btn-lg">
+                            <i class="fas fa-box"></i> إضافة منتج جديد
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Statistics Cards -->
+<div class="container-fluid">
+    <div class="row g-4 mb-5">
+        <!-- المنتجات المتاحة -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card card-primary">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ total_products }}</h3>
+                        <p class="stats-label">المنتجات المتاحة</p>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+5% من الشهر الماضي</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="{% url 'product_list' %}" class="stats-link">
+                        عرض التفاصيل <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- إجمالي المبيعات -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card card-success">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ total_sales|currency_no_symbol }}</h3>
+                        <p class="stats-label">إجمالي المبيعات ({% currency_symbol %})</p>
+                        <div class="stats-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12% من الشهر الماضي</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="{% url 'sale_invoice_list' %}" class="stats-link">
+                        عرض الفواتير <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- إجمالي المشتريات -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card card-info">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ total_purchases|currency_no_symbol }}</h3>
+                        <p class="stats-label">إجمالي المشتريات ({% currency_symbol %})</p>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8% من الشهر الماضي</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="{% url 'purchase_invoice_list' %}" class="stats-link">
+                        عرض الفواتير <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- مخزون منخفض -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card card-warning">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 class="stats-number">{{ low_stock_count }}</h3>
+                        <p class="stats-label">منتجات مخزون منخفض</p>
+                        <div class="stats-trend negative">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>يحتاج إعادة تموين</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="{% url 'product_list' %}?low_stock=1" class="stats-link">
+                        عرض المنتجات <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            إجمالي المشتريات
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_purchases|currency }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-bag fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            مخزون منخفض
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            قيمة المخزون
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ inventory_value|currency }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-warehouse fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            فواتير اليوم
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_invoices }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-invoice fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات إضافية -->
+    <div class="row g-4 mb-5">
+        <!-- العملاء والموردين -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-users text-primary"></i>
+                        العملاء والموردين
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="info-item">
+                                <div class="info-number text-primary">{{ total_customers }}</div>
+                                <div class="info-label">العملاء</div>
+                                <a href="{% url 'customer_list' %}" class="info-link">عرض الكل</a>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-item">
+                                <div class="info-number text-success">{{ total_suppliers }}</div>
+                                <div class="info-label">الموردين</div>
+                                <a href="{% url 'supplier_list' %}" class="info-link">عرض الكل</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قيمة المخزون -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-warehouse text-success"></i>
+                        تقييم المخزون
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="inventory-value">
+                        <div class="value-main">
+                            <span class="value-number">{{ inventory_value|currency_no_symbol }}</span>
+                            <span class="value-currency">{% currency_symbol %}</span>
+                        </div>
+                        <div class="value-description">إجمالي قيمة المخزون الحالي</div>
+                        <div class="value-breakdown">
+                            <small class="text-muted">
+                                متوسط قيمة المنتج: {{ average_product_value|currency }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Low Stock Alert -->
+{% if low_stock_products %}
+<div class="container-fluid">
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="alert-card alert-danger">
+                <div class="alert-header">
+                    <div class="alert-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h4 class="alert-title">تنبيه مخزون منخفض!</h4>
+                        <p class="alert-subtitle">{{ low_stock_products|length }} منتج يحتاج إعادة تموين فوري</p>
+                    </div>
+                    <div class="alert-actions">
+                        <a href="{% url 'purchase_invoice_create' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-plus"></i> إنشاء طلب شراء
+                        </a>
+                    </div>
+                </div>
+                <div class="alert-body">
+                    <div class="low-stock-grid">
+                        {% for product in low_stock_products|slice:":6" %}
+                        <div class="low-stock-item">
+                            <div class="product-info">
+                                <div class="product-name">{{ product.name }}</div>
+                                <div class="product-supplier">{{ product.supplier.name|default:"غير محدد" }}</div>
+                            </div>
+                            <div class="stock-info">
+                                <div class="current-stock">
+                                    <span class="stock-number">{{ product.quantity }}</span>
+                                    <span class="stock-label">متوفر</span>
+                                </div>
+                                <div class="min-stock">
+                                    <span class="min-number">{{ product.min_quantity|default:10 }}</span>
+                                    <span class="min-label">الحد الأدنى</span>
+                                </div>
+                            </div>
+                            <div class="stock-actions">
+                                <a href="{% url 'product_detail' product.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if low_stock_products|length > 6 %}
+                    <div class="alert-footer">
+                        <a href="{% url 'product_list' %}?low_stock=1" class="btn btn-outline-danger">
+                            عرض جميع المنتجات ({{ low_stock_products|length }})
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Enhanced Recent Activity -->
+<div class="container-fluid">
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="activity-card">
+                <div class="activity-header">
+                    <div class="activity-icon bg-success">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="activity-title">
+                        <h5>آخر فواتير البيع</h5>
+                        <p class="text-muted">أحدث عمليات البيع</p>
+                    </div>
+                    <div class="activity-action">
+                        <a href="{% url 'sale_invoice_list' %}" class="btn btn-sm btn-outline-success">
+                            عرض الكل
+                        </a>
+                    </div>
+                </div>
+                <div class="activity-body">
+                    {% if recent_sales %}
+                        <div class="activity-list">
+                            {% for sale in recent_sales %}
+                            <div class="activity-item">
+                                <div class="activity-item-icon">
+                                    <i class="fas fa-receipt text-success"></i>
+                                </div>
+                                <div class="activity-item-content">
+                                    <div class="activity-item-title">
+                                        فاتورة #{{ sale.invoice_number }}
+                                    </div>
+                                    <div class="activity-item-subtitle">
+                                        العميل: {{ sale.customer.name }}
+                                    </div>
+                                    <div class="activity-item-time">
+                                        {{ sale.date|date:"Y/m/d H:i" }}
+                                    </div>
+                                </div>
+                                <div class="activity-item-value">
+                                    <span class="value-amount text-success">
+                                        {{ sale.total_amount|currency }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد فواتير بيع حتى الآن</p>
+                            <a href="{% url 'sale_invoice_create' %}" class="btn btn-success btn-sm">
+                                إنشاء فاتورة بيع
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="activity-card">
+                <div class="activity-header">
+                    <div class="activity-icon bg-info">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="activity-title">
+                        <h5>آخر فواتير الشراء</h5>
+                        <p class="text-muted">أحدث عمليات الشراء</p>
+                    </div>
+                    <div class="activity-action">
+                        <a href="{% url 'purchase_invoice_list' %}" class="btn btn-sm btn-outline-info">
+                            عرض الكل
+                        </a>
+                    </div>
+                </div>
+                <div class="activity-body">
+                    {% if recent_purchases %}
+                        <div class="activity-list">
+                            {% for purchase in recent_purchases %}
+                            <div class="activity-item">
+                                <div class="activity-item-icon">
+                                    <i class="fas fa-file-invoice text-info"></i>
+                                </div>
+                                <div class="activity-item-content">
+                                    <div class="activity-item-title">
+                                        فاتورة #{{ purchase.invoice_number }}
+                                    </div>
+                                    <div class="activity-item-subtitle">
+                                        المورد: {{ purchase.supplier.name }}
+                                    </div>
+                                    <div class="activity-item-time">
+                                        {{ purchase.date|date:"Y/m/d H:i" }}
+                                    </div>
+                                </div>
+                                <div class="activity-item-value">
+                                    <span class="value-amount text-info">
+                                        {{ purchase.total_amount|currency }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد فواتير شراء حتى الآن</p>
+                            <a href="{% url 'purchase_invoice_create' %}" class="btn btn-info btn-sm">
+                                إنشاء فاتورة شراء
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Sale Modal -->
+<div class="modal fade" id="quickSaleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">فاتورة بيع سريعة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>سيتم توجيهك إلى صفحة إنشاء فاتورة بيع جديدة</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="{% url 'sale_invoice_create' %}" class="btn btn-primary">إنشاء فاتورة</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Purchase Modal -->
+<div class="modal fade" id="quickPurchaseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">فاتورة شراء سريعة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>سيتم توجيهك إلى صفحة إنشاء فاتورة شراء جديدة</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="{% url 'purchase_invoice_create' %}" class="btn btn-success">إنشاء فاتورة</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin: -2rem -15px 2rem -15px;
+    border-radius: 0 0 20px 20px;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.hero-stats .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.quick-actions {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.btn-gradient-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+    border: none;
+    color: white;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+    border: none;
+    color: white;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-success:hover,
+.btn-gradient-info:hover,
+.btn-gradient-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    color: white;
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.stats-card.card-primary {
+    border-top: 4px solid #007bff;
+}
+
+.stats-card.card-success {
+    border-top: 4px solid #28a745;
+}
+
+.stats-card.card-info {
+    border-top: 4px solid #17a2b8;
+}
+
+.stats-card.card-warning {
+    border-top: 4px solid #ffc107;
+}
+
+.stats-card-body {
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.stats-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.card-primary .stats-icon {
+    background: linear-gradient(45deg, #007bff, #6610f2);
+}
+
+.card-success .stats-icon {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.card-info .stats-icon {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.card-warning .stats-icon {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.stats-content {
+    flex: 1;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    line-height: 1;
+}
+
+.stats-label {
+    color: #6c757d;
+    font-size: 1rem;
+    margin: 0.5rem 0;
+    font-weight: 500;
+}
+
+.stats-trend {
+    font-size: 0.85rem;
+    color: #28a745;
+}
+
+.stats-trend.positive {
+    color: #28a745;
+}
+
+.stats-trend.negative {
+    color: #dc3545;
+}
+
+.stats-trend i {
+    margin-left: 0.25rem;
+}
+
+.stats-footer {
+    background: #f8f9fa;
+    padding: 1rem 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.stats-link {
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.stats-link:hover {
+    color: #007bff;
+}
+
+/* Info Cards */
+.info-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    border: none;
+    overflow: hidden;
+    height: 100%;
+}
+
+.info-card-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-card-title {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.info-card-body {
+    padding: 2rem;
+}
+
+.info-item {
+    text-align: center;
+}
+
+.info-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.info-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.info-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.info-link:hover {
+    text-decoration: underline;
+}
+
+.inventory-value {
+    text-align: center;
+}
+
+.value-main {
+    margin-bottom: 1rem;
+}
+
+.value-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.value-currency {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.value-description {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+/* Enhanced Alert Card */
+.alert-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.alert-card.alert-danger {
+    border-right: 5px solid #dc3545;
+}
+
+.alert-header {
+    background: linear-gradient(45deg, #dc3545, #e74c3c);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.alert-icon {
+    font-size: 2rem;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.alert-subtitle {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+}
+
+.alert-body {
+    padding: 2rem;
+}
+
+.low-stock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.low-stock-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.product-info {
+    flex: 1;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.product-supplier {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.stock-info {
+    display: flex;
+    gap: 1rem;
+    text-align: center;
+}
+
+.current-stock,
+.min-stock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stock-number {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.min-number {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.stock-label,
+.min-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.alert-footer {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .quick-actions {
+        margin-top: 2rem;
+    }
+
+    .stats-card-body {
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+    }
+
+    .low-stock-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-card,
+.info-card,
+.alert-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.stats-card:nth-child(1) { animation-delay: 0.1s; }
+.stats-card:nth-child(2) { animation-delay: 0.2s; }
+.stats-card:nth-child(3) { animation-delay: 0.3s; }
+.stats-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Activity Cards */
+.activity-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    border: none;
+    overflow: hidden;
+    height: 100%;
+}
+
+.activity-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.activity-icon.bg-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.activity-icon.bg-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+.activity-title {
+    flex: 1;
+}
+
+.activity-title h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.activity-title p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.activity-body {
+    padding: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #e9ecef;
+    transform: translateX(-5px);
+}
+
+.activity-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.activity-item-content {
+    flex: 1;
+}
+
+.activity-item-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.activity-item-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.activity-item-time {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+.activity-item-value {
+    text-align: left;
+}
+
+.value-amount {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state i {
+    opacity: 0.3;
+}
+
+/* Scrollbar Styling */
+.activity-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.activity-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.activity-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Additional Responsive Design */
+@media (max-width: 992px) {
+    .activity-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .activity-title {
+        order: 1;
+    }
+
+    .activity-icon {
+        order: 2;
+    }
+
+    .activity-action {
+        order: 3;
+    }
+}
+
+@media (max-width: 576px) {
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .activity-item-content {
+        order: 2;
+    }
+
+    .activity-item-icon {
+        order: 1;
+    }
+
+    .activity-item-value {
+        order: 3;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+

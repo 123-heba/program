@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-tags text-danger"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">إدارة فئات تصنيف المصروفات</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'expense_category_create' %}" class="btn btn-danger">
+                <i class="fas fa-plus"></i> إضافة فئة جديدة
+            </a>
+            <a href="{% url 'expense_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للمصروفات
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-tags fa-2x text-primary mb-2"></i>
+                <h4>{{ categories.count }}</h4>
+                <small class="text-muted">إجمالي الفئات</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h4>{{ categories|length }}</h4>
+                <small class="text-muted">الفئات النشطة</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-arrow-down fa-2x text-danger mb-2"></i>
+                <h4>0</h4>
+                <small class="text-muted">مصروفات مرتبطة</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة الفئات -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i>
+                    قائمة فئات المصروفات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم الفئة</th>
+                                    <th>الوصف</th>
+                                    <th>الحالة</th>
+                                    <th>تاريخ الإنشاء</th>
+                                    <th>عدد المصروفات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ category.name }}</strong>
+                                    </td>
+                                    <td>{{ category.description|default:"لا يوجد"|truncatechars:50 }}</td>
+                                    <td>
+                                        {% if category.is_active %}
+                                            <span class="badge bg-success">نشط</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">غير نشط</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ category.created_at|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ category.expense_set.count }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.description }}', {{ category.is_active|yesno:'true,false' }})" 
+                                                    title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if category.expense_set.count == 0 %}
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="confirmDelete('{{ category.name }}', '{{ category.id }}')" 
+                                                        title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                        title="لا يمكن الحذف - توجد مصروفات مرتبطة" disabled>
+                                                    <i class="fas fa-lock"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tags fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد فئات</h5>
+                        <p class="text-muted">ابدأ بإضافة فئة جديدة لتصنيف المصروفات</p>
+                        <a href="{% url 'expense_category_create' %}" class="btn btn-danger">
+                            <i class="fas fa-plus"></i> إضافة فئة جديدة
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i>
+                        معلومات حول فئات المصروفات:
+                    </h6>
+                    <ul class="mb-0">
+                        <li><strong>التصنيف:</strong> تساعد الفئات في تنظيم وتصنيف المصروفات</li>
+                        <li><strong>التقارير:</strong> يمكن إنشاء تقارير مفصلة حسب الفئة</li>
+                        <li><strong>الحذف:</strong> لا يمكن حذف فئة مرتبطة بمصروفات موجودة</li>
+                        <li><strong>الحالة:</strong> يمكن إلغاء تفعيل الفئة بدلاً من حذفها</li>
+                        <li><strong>الفئة الافتراضية:</strong> فئة "مشتريات" تُنشأ تلقائياً للمصروفات من المشتريات</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل الفئة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" id="editCategoryId" name="category_id">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">اسم الفئة</label>
+                        <input type="text" class="form-control" id="editName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">الوصف</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editIsActive" name="is_active">
+                            <label class="form-check-label" for="editIsActive">
+                                نشط
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-warning">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الفئة "<span id="deleteItemName"></span>"؟</p>
+                <p class="text-danger"><strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editCategory(id, name, description, isActive) {
+    document.getElementById('editCategoryId').value = id;
+    document.getElementById('editName').value = name;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editIsActive').checked = isActive;
+    
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+function confirmDelete(itemName, categoryId) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        // إنشاء نموذج مخفي للحذف
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = window.location.href;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete';
+        
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'category_id';
+        idInput.value = categoryId;
+        
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    };
+    
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// معالجة نموذج التعديل
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('action', 'edit');
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('حدث خطأ أثناء التحديث');
+        }
+    })
+    .catch(error => {
+        alert('حدث خطأ أثناء التحديث');
+    });
+});
+</script>
+{% endblock %}

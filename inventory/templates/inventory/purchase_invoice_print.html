@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load currency_tags %}
+
+{% block title %}طباعة فاتورة الشراء{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-3">فاتورة شراء رقم {{ invoice.invoice_number }}</h2>
+    <p><strong>المورد:</strong> {{ invoice.supplier.name }}</p>
+    <p><strong>التاريخ:</strong> {{ invoice.date }}</p>
+    <p><strong>الملاحظات:</strong> {{ invoice.notes }}</p>
+
+    <hr>
+
+    <h4>المنتجات:</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>المنتج</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td>{{ item.total_price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>الإجمالي الكلي: {{ invoice.total_amount|currency }}</h4>
+
+    <button onclick="window.print()" class="btn btn-info mt-3">
+        <i class="fas fa-print"></i> طباعة
+    </button>
+</div>
+{% endblock %}

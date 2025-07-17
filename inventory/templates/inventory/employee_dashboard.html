@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load permission_tags %}
+{% load currency_tags %}
+
+{% block title %}لوحة الموظف - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-user text-primary"></i>
+                مرحباً {{ user.get_full_name|default:user.username }}
+            </h1>
+            <p class="text-muted mb-0">
+                {% if user|get_user_role %}
+                    دورك: {{ user|get_user_role }}
+                {% else %}
+                    موظف في نظام إدارة المخزون
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-info fs-6">
+                <i class="fas fa-clock"></i>
+                {{ "now"|date:"H:i" }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- الصلاحيات المتاحة -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-key"></i>
+                    الصلاحيات المتاحة لك
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if user|has_permission:'view_products' %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-box text-success me-3"></i>
+                            <div>
+                                <h6 class="mb-0">عرض المنتجات</h6>
+                                <small class="text-muted">يمكنك مشاهدة قائمة المنتجات</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'view_customers' %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-users text-info me-3"></i>
+                            <div>
+                                <h6 class="mb-0">عرض العملاء</h6>
+                                <small class="text-muted">يمكنك مشاهدة قائمة العملاء</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'add_sale_invoices' %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-receipt text-success me-3"></i>
+                            <div>
+                                <h6 class="mb-0">إنشاء فواتير مبيعات</h6>
+                                <small class="text-muted">يمكنك إنشاء فواتير جديدة</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'view_sale_invoices' %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-invoice text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-0">عرض فواتير المبيعات</h6>
+                                <small class="text-muted">يمكنك مشاهدة الفواتير</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'add_orders' %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-shopping-cart text-warning me-3"></i>
+                            <div>
+                                <h6 class="mb-0">إنشاء طلبات</h6>
+                                <small class="text-muted">يمكنك إنشاء طلبات جديدة</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'view_orders' %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-list-alt text-secondary me-3"></i>
+                            <div>
+                                <h6 class="mb-0">عرض الطلبات</h6>
+                                <small class="text-muted">يمكنك مشاهدة الطلبات</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الروابط السريعة -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt"></i>
+                    الروابط السريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if user|has_permission:'view_products' %}
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'product_list' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-box fa-2x mb-2"></i><br>
+                            المنتجات
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'view_customers' %}
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'customer_list' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-users fa-2x mb-2"></i><br>
+                            العملاء
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'add_sale_invoices' %}
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'sale_invoice_create' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-plus-circle fa-2x mb-2"></i><br>
+                            فاتورة جديدة
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if user|has_permission:'view_sale_invoices' %}
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'sale_invoice_list' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-file-invoice fa-2x mb-2"></i><br>
+                            فواتير المبيعات
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات مهمة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-lightbulb"></i>
+                        نصائح للاستخدام:
+                    </h6>
+                    <ul class="mb-0">
+                        <li>استخدم القائمة الجانبية للتنقل بين الصفحات المتاحة</li>
+                        <li>تأكد من حفظ عملك قبل الانتقال لصفحة أخرى</li>
+                        <li>في حالة وجود مشكلة، تواصل مع المدير</li>
+                        <li>صلاحياتك محددة حسب دورك الوظيفي</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-circle"></i>
+                    معلوماتك الشخصية
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>الاسم:</strong></td>
+                        <td>{{ user.get_full_name|default:user.username }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>اسم المستخدم:</strong></td>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>البريد الإلكتروني:</strong></td>
+                        <td>{{ user.email|default:"غير محدد" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>الدور:</strong></td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ user|get_user_role }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if user.employee_profile %}
+                    <tr>
+                        <td><strong>رقم الموظف:</strong></td>
+                        <td>{{ user.employee_profile.employee_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>القسم:</strong></td>
+                        <td>{{ user.employee_profile.department|default:"غير محدد" }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <div class="alert alert-warning" role="alert">
+                    <small>
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>تنبيه:</strong> أنت مسجل كموظف عادي. للحصول على صلاحيات إضافية، تواصل مع المدير.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.btn-outline-primary:hover,
+.btn-outline-info:hover,
+.btn-outline-success:hover,
+.btn-outline-warning:hover {
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+</style>
+{% endblock %}

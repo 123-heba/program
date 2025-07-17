@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{% if object %}تعديل عنصر الطلب{% else %}إضافة عنصر للطلب{% endif %} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2>
+                <i class="fas fa-box text-primary"></i>
+                {% if object %}تعديل عنصر الطلب{% else %}إضافة عنصر للطلب{% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% if object %}تعديل تفاصيل عنصر الطلب{% else %}إضافة منتج جديد للطلب{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'order_detail' order.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للطلب
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit"></i>
+                    {% if object %}تعديل عنصر الطلب{% else %}إضافة عنصر للطلب{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="orderItemForm">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="{{ form.product.id_for_label }}" class="form-label">المنتج <span class="text-danger">*</span></label>
+                            {{ form.product }}
+                            {% if form.product.errors %}
+                                <div class="text-danger">{{ form.product.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">الكمية <span class="text-danger">*</span></label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="text-danger">{{ form.quantity.errors }}</div>
+                            {% endif %}
+                            <div class="form-text" id="available-quantity"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.unit_price.id_for_label }}" class="form-label">سعر الوحدة <span class="text-danger">*</span></label>
+                            {{ form.unit_price }}
+                            {% if form.unit_price.errors %}
+                                <div class="text-danger">{{ form.unit_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">السعر الإجمالي</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="total_price" readonly>
+                                <span class="input-group-text">{% currency_symbol %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'order_detail' order.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات الطلب
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>رقم الطلب:</strong></td>
+                        <td>{{ order.order_number }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>العميل:</strong></td>
+                        <td>{{ order.customer.name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>تاريخ الطلب:</strong></td>
+                        <td>{{ order.order_date|date:"Y/m/d" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>الحالة:</strong></td>
+                        <td>
+                            <span class="badge 
+                                {% if order.status == 'pending' %}bg-warning
+                                {% elif order.status == 'processing' %}bg-info
+                                {% elif order.status == 'shipped' %}bg-primary
+                                {% elif order.status == 'delivered' %}bg-success
+                                {% elif order.status == 'cancelled' %}bg-danger
+                                {% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>المبلغ الإجمالي:</strong></td>
+                        <td>{{ order.total_amount|currency }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle"></i>
+                    تعليمات
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> اختر المنتج من القائمة المنسدلة</li>
+                    <li><i class="fas fa-check text-success"></i> أدخل الكمية المطلوبة</li>
+                    <li><i class="fas fa-check text-success"></i> سيتم عرض الكمية المتاحة في المخزون</li>
+                    <li><i class="fas fa-check text-success"></i> تأكد من صحة سعر الوحدة</li>
+                    <li><i class="fas fa-check text-success"></i> سيتم حساب السعر الإجمالي تلقائياً</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('{{ form.product.id_for_label }}');
+    const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+    const unitPriceInput = document.getElementById('{{ form.unit_price.id_for_label }}');
+    const totalPriceInput = document.getElementById('total_price');
+    const availableQuantityDiv = document.getElementById('available-quantity');
+    
+    // تحميل معلومات المنتج عند التغيير
+    productSelect.addEventListener('change', function() {
+        if (this.value) {
+            fetch(`/inventory/api/product/${this.value}/`)
+                .then(response => response.json())
+                .then(data => {
+                    unitPriceInput.value = data.price;
+                    availableQuantityDiv.innerHTML = `الكمية المتاحة في المخزون: <strong>${data.quantity}</strong>`;
+                    calculateTotal();
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            unitPriceInput.value = '';
+            availableQuantityDiv.innerHTML = '';
+            totalPriceInput.value = '';
+        }
+    });
+    
+    // حساب السعر الإجمالي
+    function calculateTotal() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(unitPriceInput.value) || 0;
+        const total = quantity * unitPrice;
+        totalPriceInput.value = total.toFixed(2);
+    }
+    
+    // تحديث السعر الإجمالي عند تغيير الكمية أو السعر
+    quantityInput.addEventListener('input', calculateTotal);
+    unitPriceInput.addEventListener('input', calculateTotal);
+    
+    // حساب السعر الإجمالي عند تحميل الصفحة
+    calculateTotal();
+    
+    // إذا كان هناك منتج محدد بالفعل، قم بتحميل معلوماته
+    if (productSelect.value) {
+        const event = new Event('change');
+        productSelect.dispatchEvent(event);
+    }
+});
+</script>
+{% endblock %}

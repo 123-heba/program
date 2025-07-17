@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-arrow-down text-danger"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">عرض تفاصيل المصروف</p>
+        </div>
+        <div class="btn-group" role="group">
+            {% if not expense.purchase_invoice %}
+                <a href="{% url 'expense_edit' expense.pk %}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> تعديل المصروف
+                </a>
+                <button type="button" class="btn btn-danger" 
+                        onclick="confirmDelete('{{ expense.reference_number }}', '{% url 'expense_delete' expense.pk %}')">
+                    <i class="fas fa-trash"></i> حذف المصروف
+                </button>
+            {% endif %}
+            <a href="{% url 'expense_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات المصروف -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات المصروف
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>رقم المرجع:</strong></td>
+                                <td><span class="badge bg-danger fs-6">{{ expense.reference_number }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>عنوان المصروف:</strong></td>
+                                <td>{{ expense.title }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>الفئة:</strong></td>
+                                <td>
+                                    {% if expense.category %}
+                                        <span class="badge bg-info">{{ expense.category.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted">غير محدد</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>نوع المصروف:</strong></td>
+                                <td><span class="badge bg-secondary">{{ expense.get_expense_type_display }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>طريقة الدفع:</strong></td>
+                                <td><span class="badge bg-primary">{{ expense.get_payment_method_display }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>المبلغ:</strong></td>
+                                <td><span class="text-danger fw-bold fs-4">{{ expense.amount|currency }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاريخ المصروف:</strong></td>
+                                <td>{{ expense.date|date:"Y/m/d" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>اسم المورد:</strong></td>
+                                <td>{{ expense.supplier_name|default:"غير محدد" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>رقم الإيصال:</strong></td>
+                                <td>{{ expense.receipt_number|default:"غير محدد" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>تم الإنشاء بواسطة:</strong></td>
+                                <td>{{ expense.created_by.get_full_name|default:expense.created_by.username }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if expense.description %}
+                <div class="mt-3">
+                    <strong>الوصف:</strong>
+                    <div class="bg-light p-3 rounded mt-2">
+                        {{ expense.description }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if expense.notes %}
+                <div class="mt-3">
+                    <strong>ملاحظات:</strong>
+                    <div class="bg-light p-3 rounded mt-2">
+                        {{ expense.notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie"></i>
+                    ملخص المصروف
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-arrow-down fa-3x text-danger mb-2"></i>
+                    <h3 class="text-danger">{{ expense.amount|floatformat:2 }} ر.س</h3>
+                    <small class="text-muted">قيمة المصروف</small>
+                </div>
+                
+                <div class="mb-3">
+                    {% if expense.purchase_invoice %}
+                        <i class="fas fa-link fa-2x text-info mb-2"></i>
+                        <h6 class="text-info">مرتبط بفاتورة مشتريات</h6>
+                        <small class="text-muted">مصروف تلقائي من المشتريات</small>
+                    {% else %}
+                        <i class="fas fa-hand-holding-usd fa-2x text-warning mb-2"></i>
+                        <h6 class="text-warning">مصروف يدوي</h6>
+                        <small class="text-muted">تم إضافته يدوياً</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <i class="fas fa-calendar fa-2x text-primary mb-2"></i>
+                    <h6>{{ expense.date|date:"Y/m/d" }}</h6>
+                    <small class="text-muted">تاريخ المصروف</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الفاتورة المرتبطة -->
+{% if expense.purchase_invoice %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-invoice"></i>
+                    الفاتورة المرتبطة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>رقم الفاتورة:</strong><br>
+                        <span class="badge bg-primary fs-6">{{ expense.purchase_invoice.invoice_number }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>المورد:</strong><br>
+                        {{ expense.purchase_invoice.supplier.name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>تاريخ الفاتورة:</strong><br>
+                        {{ expense.purchase_invoice.date|date:"Y/m/d" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>إجمالي الفاتورة:</strong><br>
+                        <span class="text-danger fw-bold">{{ expense.purchase_invoice.total_amount|floatformat:2 }} ر.س</span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'purchase_invoice_detail' expense.purchase_invoice.pk %}" class="btn btn-primary">
+                        <i class="fas fa-eye"></i> عرض تفاصيل الفاتورة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- معلومات إضافية -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i>
+                        معلومات مهمة:
+                    </h6>
+                    <ul class="mb-0">
+                        {% if expense.purchase_invoice %}
+                            <li>هذا المصروف مرتبط بفاتورة مشتريات ولا يمكن تعديله أو حذفه</li>
+                            <li>تم إنشاؤه تلقائياً عند إنشاء فاتورة المشتريات</li>
+                            <li>أي تعديل على الفاتورة سينعكس على هذا المصروف تلقائياً</li>
+                        {% else %}
+                            <li>هذا مصروف يدوي يمكن تعديله أو حذفه</li>
+                            <li>يمكن استخدامه لتسجيل مصروفات أخرى غير المشتريات</li>
+                            <li>تأكد من دقة البيانات المدخلة للحصول على تقارير صحيحة</li>
+                        {% endif %}
+                        <li>يظهر هذا المصروف في جميع التقارير المالية</li>
+                        <li>يُستخدم في حساب إجمالي المصروفات والأرباح</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if not expense.purchase_invoice %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المصروف "<span id="deleteItemName"></span>"؟</p>
+                <p class="text-danger"><strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if not expense.purchase_invoice %}
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+@media print {
+    .btn, .page-header .d-flex > div:last-child {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

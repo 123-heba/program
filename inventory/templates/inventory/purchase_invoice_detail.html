@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}تفاصيل فاتورة الشراء - {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-file-invoice text-primary"></i> فاتورة شراء رقم {{ invoice.invoice_number }}</h2>
+            <p class="text-muted mb-0">تفاصيل فاتورة الشراء والمنتجات المشتراة</p>
+        </div>
+        <div>
+            <a href="{% url 'purchase_invoice_print' invoice.pk %}" class="btn btn-success me-2" target="_blank">
+                <i class="fas fa-print"></i> طباعة الفاتورة
+            </a>
+            <a href="{% url 'purchase_return_create' invoice.id %}" class="btn btn-danger me-2">
+                <i class="fas fa-undo"></i> إنشاء مرتجع
+            </a>
+            <a href="{% url 'purchase_invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> تفاصيل الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>رقم الفاتورة:</strong></td>
+                                <td>{{ invoice.invoice_number }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>المورد:</strong></td>
+                                <td>{{ invoice.supplier.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاريخ الفاتورة:</strong></td>
+                                <td>{{ invoice.date|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>أنشئت بواسطة:</strong></td>
+                                <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>المبلغ الإجمالي:</strong></td>
+                                <td><strong class="text-success">{{ invoice.total_amount|currency }}</strong></td>
+                            </tr>
+                            {% if invoice.notes %}
+                            <tr>
+                                <td><strong>الملاحظات:</strong></td>
+                                <td>{{ invoice.notes }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-boxes"></i> المنتجات المشتراة</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="40%">المنتج</th>
+                                <th width="15%">الكمية</th>
+                                <th width="20%">سعر الوحدة</th>
+                                <th width="20%">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    {% if item.product.description %}
+                                    <br><small class="text-muted">{{ item.product.description|truncatewords:10 }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">{{ item.unit_price|currency }}</td>
+                                <td class="text-end"><strong>{{ item.total_price|currency }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>المجموع الكلي:</strong></td>
+                                <td class="text-end"><strong class="text-success">{{ invoice.total_amount|currency }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-truck"></i> معلومات المورد</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>اسم المورد:</strong></td>
+                        <td>{{ invoice.supplier.name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>رقم الهاتف:</strong></td>
+                        <td>{{ invoice.supplier.phone|default:"غير محدد" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>البريد الإلكتروني:</strong></td>
+                        <td>{{ invoice.supplier.email|default:"غير محدد" }}</td>
+                    </tr>
+                    {% if invoice.supplier.address %}
+                    <tr>
+                        <td><strong>العنوان:</strong></td>
+                        <td>{{ invoice.supplier.address }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> إحصائيات الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-box text-primary"></i> عدد المنتجات: {{ items.count }}</li>
+                    <li><i class="fas fa-cubes text-info"></i> إجمالي الكمية:
+                        {% for item in items %}{{ item.quantity }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                    </li>
+                    <li><i class="fas fa-money-bill text-success"></i> المبلغ الإجمالي: {{ invoice.total_amount|currency }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> إجراءات</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'purchase_invoice_print' invoice.pk %}" class="btn btn-success" target="_blank">
+                        <i class="fas fa-print"></i> طباعة الفاتورة
+                    </a>
+                    <a href="{% url 'purchase_invoice_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-list"></i> قائمة الفواتير
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

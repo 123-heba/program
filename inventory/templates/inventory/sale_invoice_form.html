@@ -1,0 +1,278 @@
+
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}إنشاء فاتورة بيع - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="h2 mb-0">
+        <i class="fas fa-file-invoice-dollar text-success"></i>
+        إنشاء فاتورة بيع
+    </h1>
+</div>
+
+<form method="post" id="invoice-form">
+    {% csrf_token %}
+    <div class="row">
+        <!-- Invoice Details -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">تفاصيل الفاتورة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.customer.id_for_label }}" class="form-label">العميل</label>
+                        {{ form.customer }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                        {{ form.notes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">المنتجات</h5>
+                </div>
+                <div class="card-body">
+                    <div id="product-rows">
+                        <!-- Product rows will be added here -->
+                    </div>
+                    <button type="button" id="add-product-row" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> إضافة منتج
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary and Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4>الإجمالي: <span id="total-amount">0.00</span> {% currency_symbol %}</h4>
+                    </div>
+                    <div>
+                        <a href="{% url 'sale_invoice_list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-success" id="submit-btn">حفظ الفاتورة</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Product Row Template -->
+<template id="product-row-template">
+    <div class="row product-row mb-3 align-items-center">
+        <div class="col-md-4">
+            <select name="product" class="form-select product-select">
+                <option value="">اختر منتج</option>
+                {% for product in products %}
+                    <option value="{{ product.id }}" data-price="{{ product.price|default:'0' }}">
+                        {{ product.name }} (متوفر: {{ product.quantity }}) - {{ product.price|default:'0'|floatformat:2 }} ر.س
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="quantity" class="form-control quantity-input" placeholder="الكمية" min="1">
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="price" class="form-control price-input" placeholder="السعر" step="0.01" min="0">
+        </div>
+        <div class="col-md-3">
+            <div class="form-control-plaintext row-total fw-bold text-success">0.00 {% currency_symbol %}</div>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-product-row">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addProductRowBtn = document.getElementById('add-product-row');
+    const productRowsContainer = document.getElementById('product-rows');
+    const productRowTemplate = document.getElementById('product-row-template');
+    const totalAmountSpan = document.getElementById('total-amount');
+
+    function addProductRow() {
+        const newRow = productRowTemplate.content.cloneNode(true);
+        productRowsContainer.appendChild(newRow);
+        updateTotalAmount();
+    }
+
+    addProductRowBtn.addEventListener('click', addProductRow);
+
+    // إضافة صف منتج واحد عند تحميل الصفحة
+    addProductRow();
+
+    // التحقق من صحة النموذج قبل الإرسال
+    document.getElementById('invoice-form').addEventListener('submit', function(e) {
+        const productRows = productRowsContainer.querySelectorAll('.product-row');
+        let hasValidProducts = false;
+
+        productRows.forEach(row => {
+            const productSelect = row.querySelector('.product-select');
+            const quantityInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+
+            if (productSelect && quantityInput && priceInput) {
+                const productId = productSelect.value;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+
+                if (productId && quantity > 0 && price > 0) {
+                    hasValidProducts = true;
+                }
+            }
+        });
+
+        if (!hasValidProducts) {
+            e.preventDefault();
+            alert('يرجى إضافة منتج واحد على الأقل مع كمية وسعر صحيحين');
+            return false;
+        }
+
+        // تأكيد الحفظ
+        const totalAmount = parseFloat(document.getElementById('total-amount').textContent) || 0;
+        if (totalAmount <= 0) {
+            e.preventDefault();
+            alert('إجمالي الفاتورة يجب أن يكون أكبر من صفر');
+            return false;
+        }
+
+        return confirm(`هل أنت متأكد من حفظ الفاتورة؟\nالإجمالي: ${totalAmount.toFixed(2)} {% currency_symbol %}`);
+    });
+
+    productRowsContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-product-row')) {
+            e.target.closest('.product-row').remove();
+            updateTotalAmount();
+        }
+    });
+
+    productRowsContainer.addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-select')) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const price = selectedOption.dataset.price || '0';
+            const priceInput = e.target.closest('.product-row').querySelector('.price-input');
+
+            console.log('Product selected:', selectedOption.text, 'Price:', price);
+
+            if (priceInput) {
+                priceInput.value = price;
+                updateTotalAmount();
+            }
+        }
+    });
+
+    productRowsContainer.addEventListener('input', function(e) {
+        if (e.target.classList.contains('quantity-input') || e.target.classList.contains('price-input')) {
+            updateTotalAmount();
+        }
+    });
+
+    function updateTotalAmount() {
+        let total = 0;
+        const productRows = productRowsContainer.querySelectorAll('.product-row');
+
+        console.log('Updating total amount, found rows:', productRows.length);
+
+        productRows.forEach((row, index) => {
+            const priceInput = row.querySelector('.price-input');
+            const quantityInput = row.querySelector('.quantity-input');
+            const rowTotalElement = row.querySelector('.row-total');
+
+            if (priceInput && quantityInput && rowTotalElement) {
+                const price = parseFloat(priceInput.value) || 0;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const rowTotal = price * quantity;
+
+                console.log(`Row ${index}: Price=${price}, Quantity=${quantity}, Total=${rowTotal}`);
+
+                // تحديث إجمالي الصف
+                rowTotalElement.textContent = rowTotal.toFixed(2) + ' {% currency_symbol %}';
+
+                total += rowTotal;
+            }
+        });
+
+        console.log('Grand total:', total);
+
+        // تحديث الإجمالي العام
+        if (totalAmountSpan) {
+            totalAmountSpan.textContent = total.toFixed(2);
+            console.log('Updated total amount span to:', total.toFixed(2));
+        } else {
+            console.error('Total amount span not found!');
+        }
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-row {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.product-row:hover {
+    background-color: #e9ecef;
+}
+
+.row-total {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #28a745;
+    background-color: #d4edda;
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+}
+
+#total-amount {
+    color: #007bff;
+    font-weight: bold;
+    font-size: 1.3em;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.btn {
+    border-radius: 6px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.remove-product-row:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+</style>
+{% endblock %}
+

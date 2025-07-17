@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل الدور - {{ role.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-user-tag text-primary"></i> تفاصيل الدور الوظيفي</h2>
+            <p class="text-muted mb-0">{{ role.name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'role_edit' role.pk %}" class="btn btn-warning me-2">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+            <a href="{% url 'role_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- معلومات الدور -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات الدور
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>اسم الدور:</strong></td>
+                                <td><span class="badge bg-primary fs-6">{{ role.name }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>الحالة:</strong></td>
+                                <td>
+                                    {% if role.is_active %}
+                                        <span class="badge bg-success">نشط</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">غير نشط</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>عدد الصلاحيات:</strong></td>
+                                <td><span class="badge bg-info">{{ role.permissions.count }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>عدد الموظفين:</strong></td>
+                                <td><span class="badge bg-secondary">{{ employees_count }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>تاريخ الإنشاء:</strong></td>
+                                <td>{{ role.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>آخر تحديث:</strong></td>
+                                <td>{{ role.updated_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if role.description %}
+                <div class="mt-3">
+                    <strong>الوصف:</strong>
+                    <p class="text-muted">{{ role.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- الصلاحيات -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-key"></i>
+                    الصلاحيات المرتبطة بهذا الدور
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if role.permissions.all %}
+                    <div class="row">
+                        {% for permission in role.permissions.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title text-success mb-1">
+                                        <i class="fas fa-check-circle"></i>
+                                        {{ permission.name }}
+                                    </h6>
+                                    <p class="card-text">
+                                        <small class="text-muted">{{ permission.codename }}</small>
+                                    </p>
+                                    {% if permission.description %}
+                                    <p class="card-text">
+                                        <small>{{ permission.description }}</small>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-key fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد صلاحيات</h5>
+                        <p class="text-muted">لم يتم تعيين أي صلاحيات لهذا الدور</p>
+                        <a href="{% url 'role_edit' role.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> إضافة صلاحيات
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- الموظفين المرتبطين بهذا الدور -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users"></i>
+                    الموظفين المرتبطين بهذا الدور
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if role.employee_set.all %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>رقم الموظف</th>
+                                    <th>الاسم</th>
+                                    <th>القسم</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in role.employee_set.all %}
+                                <tr>
+                                    <td>{{ employee.employee_id }}</td>
+                                    <td>{{ employee.full_name }}</td>
+                                    <td>{{ employee.department|default:"غير محدد" }}</td>
+                                    <td>
+                                        {% if employee.is_active_employee %}
+                                            <span class="badge bg-success">نشط</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">غير نشط</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا يوجد موظفين</h5>
+                        <p class="text-muted">لم يتم تعيين أي موظف لهذا الدور</p>
+                        <a href="{% url 'employee_create' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> إضافة موظف
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- حالة الدور -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    حالة الدور
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                {% if role.is_active %}
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-success">دور نشط</h5>
+                    <p class="text-muted">يمكن تعيينه للموظفين</p>
+                {% else %}
+                    <i class="fas fa-pause-circle fa-3x text-warning mb-3"></i>
+                    <h5 class="text-warning">دور غير نشط</h5>
+                    <p class="text-muted">لا يمكن تعيينه للموظفين الجدد</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- إحصائيات سريعة -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar"></i>
+                    إحصائيات سريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-info">{{ role.permissions.count }}</h4>
+                        <small class="text-muted">صلاحية</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-secondary">{{ employees_count }}</h4>
+                        <small class="text-muted">موظف</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- إجراءات سريعة -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs"></i>
+                    إجراءات سريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'role_edit' role.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> تعديل الدور
+                    </a>
+                    <a href="{% url 'employee_list' %}" class="btn btn-info">
+                        <i class="fas fa-users"></i> عرض الموظفين
+                    </a>
+                    {% if employees_count == 0 %}
+                    <a href="{% url 'role_delete' role.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> حذف الدور
+                    </a>
+                    {% else %}
+                    <button class="btn btn-danger" disabled title="لا يمكن حذف دور مرتبط بموظفين">
+                        <i class="fas fa-trash"></i> حذف الدور
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- تنبيه أمني -->
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info mb-0" role="alert">
+                    <small>
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>تنبيه:</strong> هذه الصفحة متاحة للمدير والأدمن فقط.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

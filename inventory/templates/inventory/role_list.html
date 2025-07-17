@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة الأدوار الوظيفية - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-user-tag text-primary"></i> إدارة الأدوار الوظيفية</h2>
+            <p class="text-muted mb-0">إدارة الأدوار والصلاحيات - للمدير والأدمن فقط</p>
+        </div>
+        <div>
+            {% if not migration_error %}
+            <a href="{% url 'employee_list' %}" class="btn btn-info me-2">
+                <i class="fas fa-users"></i> إدارة الموظفين
+            </a>
+            <a href="{% url 'role_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إضافة دور جديد
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- رسالة خطأ Migration -->
+{% if migration_error %}
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> خطأ في قاعدة البيانات</h4>
+    <p>يبدو أن جداول إدارة الأدوار والموظفين لم يتم إنشاؤها بعد في قاعدة البيانات.</p>
+    <hr>
+    <h5>لحل هذه المشكلة، يرجى تنفيذ الأوامر التالية في Terminal:</h5>
+    <div class="bg-dark text-white p-3 rounded mt-3">
+        <code>
+            cd inventory_management<br>
+            python manage.py makemigrations<br>
+            python manage.py migrate
+        </code>
+    </div>
+    <p class="mt-3 mb-0">
+        <strong>تفاصيل الخطأ:</strong> {{ error_message }}
+    </p>
+</div>
+{% else %}
+
+<!-- فلاتر البحث -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">البحث</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="اسم الدور أو الوصف..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary d-block">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- قائمة الأدوار -->
+<div class="card">
+    <div class="card-body">
+        {% if roles %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>اسم الدور</th>
+                            <th>الوصف</th>
+                            <th>عدد الصلاحيات</th>
+                            <th>عدد الموظفين</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">{{ role.name }}</strong>
+                                </td>
+                                <td>
+                                    {% if role.description %}
+                                        {{ role.description|truncatewords:10 }}
+                                    {% else %}
+                                        <span class="text-muted">لا يوجد وصف</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ role.permissions.count }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        {% with employee_count=role.employee_set.count %}
+                                            {{ employee_count }}
+                                        {% endwith %}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if role.is_active %}
+                                        <span class="badge bg-success">نشط</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">غير نشط</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ role.created_at|date:"Y/m/d" }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'role_detail' role.pk %}" 
+                                           class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'role_edit' role.pk %}" 
+                                           class="btn btn-sm btn-outline-warning" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'role_delete' role.pk %}" 
+                                           class="btn btn-sm btn-outline-danger" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-user-tag fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد أدوار وظيفية</h5>
+                <p class="text-muted">ابدأ بإضافة دور وظيفي جديد</p>
+                <a href="{% url 'role_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> إضافة دور جديد
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات مهمة
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> الأدوار تحدد صلاحيات الموظفين في النظام</li>
+                    <li><i class="fas fa-check text-success"></i> يمكن تعيين عدة صلاحيات لكل دور</li>
+                    <li><i class="fas fa-check text-success"></i> لا يمكن حذف دور مرتبط بموظفين</li>
+                    <li><i class="fas fa-check text-success"></i> يمكن إيقاف الدور مؤقتاً بدلاً من حذفه</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt"></i>
+                    الأمان
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning mb-0" role="alert">
+                    <small>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>تنبيه:</strong> هذه الصفحة متاحة للمدير والأدمن فقط. تأكد من منح الصلاحيات المناسبة لكل دور.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-user-tag fa-2x text-primary mb-2"></i>
+                <h5>إجمالي الأدوار</h5>
+                <h3 class="text-primary">{{ roles.count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h5>الأدوار النشطة</h5>
+                <h3 class="text-success">
+                    {% for role in roles %}
+                        {% if role.is_active %}{{ forloop.counter0|add:1 }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-pause-circle fa-2x text-warning mb-2"></i>
+                <h5>الأدوار غير النشطة</h5>
+                <h3 class="text-warning">
+                    {% for role in roles %}
+                        {% if not role.is_active %}{{ forloop.counter0|add:1 }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-key fa-2x text-info mb-2"></i>
+                <h5>إجمالي الصلاحيات</h5>
+                <h3 class="text-info">
+                    {% for role in roles %}
+                        {{ role.permissions.count|add:0 }}
+                    {% empty %}0{% endfor %}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

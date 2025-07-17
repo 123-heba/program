@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة المخزون{% endblock %}</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --success-green: #28a745;
+            --danger-red: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+        }
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, var(--primary-blue), #0056b3);
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link {
+            color: white;
+            padding: 15px 20px;
+            margin: 5px 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255,255,255,0.2);
+            transform: translateX(-5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.3);
+            font-weight: 600;
+        }
+        
+        .main-content {
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            border-right: 5px solid var(--primary-blue);
+        }
+        
+        .stat-card.success {
+            border-right-color: var(--success-green);
+        }
+        
+        .stat-card.danger {
+            border-right-color: var(--danger-red);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), #0056b3);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green), #1e7e34);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-red), #c82333);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .table {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-blue), #0056b3);
+            color: white;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(0,123,255,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        
+        .low-stock {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-right: 4px solid var(--danger-red);
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .icon-lg {
+            font-size: 2rem;
+            margin-left: 15px;
+        }
+        
+        .text-primary { color: var(--primary-blue) !important; }
+        .text-success { color: var(--success-green) !important; }
+        .text-danger { color: var(--danger-red) !important; }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -250px;
+                width: 250px;
+                height: 100vh;
+                z-index: 1000;
+                transition: right 0.3s ease;
+            }
+            
+            .sidebar.show {
+                right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <div class="d-md-none">
+        <nav class="navbar navbar-expand-md navbar-dark bg-primary">
+            <div class="container-fluid">
+                <span class="navbar-brand">🏬 نظام إدارة المخزون</span>
+                <button class="navbar-toggler" type="button" onclick="toggleSidebar()">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar" id="sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4 d-none d-md-block">
+                        <h4 class="text-white">🏬 نظام إدارة المخزون</h4>
+                    </div>
+
+                    <!-- معلومات المستخدم -->
+                    {% load permission_tags %}
+                    {% if user.is_authenticated %}
+                    <div class="user-info mb-4 p-3" style="background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <div class="text-center">
+                            <div class="user-avatar mb-2">
+                                <i class="fas fa-user-circle fa-3x text-white"></i>
+                            </div>
+                            <h6 class="text-white mb-1">{{ user.get_full_name|default:user.username }}</h6>
+                            <small class="text-white-50">
+                                {% if user.is_superuser %}
+                                    <i class="fas fa-crown text-warning"></i> مدير عام
+                                {% elif user|is_manager %}
+                                    <i class="fas fa-user-tie text-info"></i> {{ user|get_user_role }}
+                                {% else %}
+                                    <i class="fas fa-user text-light"></i> {{ user|get_user_role }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                                <i class="fas fa-home icon-lg"></i>
+                                لوحة التحكم
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'product' in request.resolver_match.url_name and 'barcode' not in request.resolver_match.url_name %}active{% endif %}" href="{% url 'product_list' %}">
+                                <i class="fas fa-box icon-lg"></i>
+                                المنتجات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'barcode' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'product_barcodes' %}">
+                                <i class="fas fa-barcode icon-lg text-info"></i>
+                                باركودات المنتجات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'supplier_list' %}">
+                                <i class="fas fa-truck icon-lg"></i>
+                                الموردين
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'customer_list' %}">
+                                <i class="fas fa-users icon-lg"></i>
+                                العملاء
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'order_list' %}">
+                                <i class="fas fa-clipboard-list icon-lg"></i>
+                                الطلبات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'sale' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'sale_invoice_list' %}">
+                                <i class="fas fa-shopping-cart icon-lg"></i>
+                                فواتير البيع
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'purchase' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'purchase_invoice_list' %}">
+                                <i class="fas fa-shopping-bag icon-lg"></i>
+                                فواتير الشراء
+                            </a>
+                        </li>
+
+                        <!-- المرتجعات -->
+                        <li class="nav-item">
+                            <hr class="text-white-50 my-2">
+                        </li>
+                        <li class="nav-item">
+                            <small class="text-white-50 px-3">المرتجعات</small>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'sale_return' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'sale_return_list' %}">
+                                <i class="fas fa-undo icon-lg text-warning"></i>
+                                مرتجعات المبيعات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'purchase_return' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'purchase_return_list' %}">
+                                <i class="fas fa-undo icon-lg text-danger"></i>
+                                مرتجعات المشتريات
+                            </a>
+                        </li>
+
+                        <!-- الإيرادات والمصروفات -->
+                        <li class="nav-item">
+                            <hr class="text-white-50 my-2">
+                        </li>
+                        <li class="nav-item">
+                            <small class="text-white-50 px-3">المحاسبة</small>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'revenue' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'revenue_list' %}">
+                                <i class="fas fa-arrow-up icon-lg text-success"></i>
+                                الإيرادات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'expense' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'expense_list' %}">
+                                <i class="fas fa-arrow-down icon-lg text-danger"></i>
+                                المصروفات
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reports' %}">
+                                <i class="fas fa-chart-bar icon-lg"></i>
+                                التقارير
+                            </a>
+                        </li>
+
+                        <!-- إدارة الموظفين والأدوار - للمدير فقط -->
+                        {% load permission_tags %}
+                        {% if user|can_manage_employees or user|can_manage_roles %}
+                        <li class="nav-item">
+                            <hr class="text-white-50 my-3">
+                        </li>
+                        <li class="nav-item">
+                            <small class="text-white-50 px-3">إدارة الفريق</small>
+                        </li>
+                        {% endif %}
+
+                        {% if user|can_manage_employees %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'employee' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'employee_list' %}">
+                                <i class="fas fa-users-cog icon-lg"></i>
+                                إدارة الموظفين
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% if user|can_manage_roles %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'role' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'role_list' %}">
+                                <i class="fas fa-user-tag icon-lg"></i>
+                                إدارة الأدوار
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="nav-item mt-4">
+                            <form action="{% url 'logout' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-link btn btn-link text-white text-decoration-none">
+                                    <i class="fas fa-sign-out-alt icon-lg"></i>
+                                    تسجيل الخروج
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = document.querySelector('.navbar-toggler');
+            
+            if (window.innerWidth < 768 && 
+                !sidebar.contains(event.target) && 
+                !toggleButton.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

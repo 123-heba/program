@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-undo text-danger"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">قائمة جميع مرتجعات المشتريات</p>
+        </div>
+        <div>
+            <a href="{% url 'purchase_invoice_list' %}" class="btn btn-primary">
+                <i class="fas fa-file-invoice"></i> فواتير المشتريات
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- البحث والفلاتر -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">البحث</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ request.GET.search }}" 
+                               placeholder="ابحث برقم المرتجع، رقم الفاتورة، أو سبب المرتجع...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> بحث
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <a href="{% url 'purchase_return_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> مسح
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-undo fa-2x text-danger mb-2"></i>
+                <h4>{{ returns.count }}</h4>
+                <small class="text-muted">إجمالي المرتجعات</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar-day fa-2x text-info mb-2"></i>
+                <h4>{{ returns|length }}</h4>
+                <small class="text-muted">مرتجعات اليوم</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-money-bill-wave fa-2x text-danger mb-2"></i>
+                <h4>
+                    {% widthratio returns.aggregate.total_amount 1 1 %}
+                    {% currency_symbol %}
+                </h4>
+                <small class="text-muted">إجمالي قيمة المرتجعات</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة المرتجعات -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i>
+                    قائمة المرتجعات
+                    {% if request.GET.search %}
+                        - نتائج البحث عن "{{ request.GET.search }}"
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if returns %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>رقم المرتجع</th>
+                                    <th>الفاتورة الأصلية</th>
+                                    <th>المورد</th>
+                                    <th>تاريخ المرتجع</th>
+                                    <th>عدد المنتجات</th>
+                                    <th>إجمالي القيمة</th>
+                                    <th>تم الإنشاء بواسطة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for return in returns %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-danger">{{ return.return_number }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'purchase_invoice_detail' return.original_invoice.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            {{ return.original_invoice.invoice_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ return.original_invoice.supplier.name }}</td>
+                                    <td>{{ return.return_date|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ return.items.count }}</span>
+                                    </td>
+                                    <td class="text-danger fw-bold">{{ return.total_amount|currency }}</td>
+                                    <td>{{ return.created_by.get_full_name|default:return.created_by.username }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'purchase_return_detail' return.pk %}" 
+                                               class="btn btn-sm btn-outline-info" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-undo fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">لا توجد مرتجعات</h4>
+                        {% if request.GET.search %}
+                            <p class="text-muted">لم يتم العثور على نتائج للبحث "{{ request.GET.search }}"</p>
+                            <a href="{% url 'purchase_return_list' %}" class="btn btn-primary">
+                                <i class="fas fa-list"></i> عرض جميع المرتجعات
+                            </a>
+                        {% else %}
+                            <p class="text-muted">لم يتم إنشاء أي مرتجعات بعد</p>
+                            <a href="{% url 'purchase_invoice_list' %}" class="btn btn-primary">
+                                <i class="fas fa-file-invoice"></i> عرض فواتير المشتريات
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        معلومات حول مرتجعات المشتريات:
+                    </h6>
+                    <ul class="mb-0">
+                        <li><strong>خصم من المخزون:</strong> عند إنشاء مرتجع مشتريات، تتم خصم الكميات المرتجعة من المخزون تلقائياً</li>
+                        <li><strong>إنشاء المرتجع:</strong> يمكن إنشاء مرتجع من صفحة تفاصيل أي فاتورة مشتريات</li>
+                        <li><strong>التحقق من المخزون:</strong> تأكد من توفر الكمية في المخزون قبل إنشاء المرتجع</li>
+                        <li><strong>التتبع:</strong> يتم ربط كل مرتجع بالفاتورة الأصلية لسهولة التتبع</li>
+                        <li><strong>التقارير:</strong> تظهر المرتجعات في التقارير المالية كخصم من المشتريات</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+</style>
+{% endblock %}

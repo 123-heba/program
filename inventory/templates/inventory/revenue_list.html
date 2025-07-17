@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}{{ title }} - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-arrow-up text-success"></i> {{ title }}</h2>
+            <p class="text-muted mb-0">إدارة وتتبع جميع الإيرادات</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'revenue_create' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> إضافة إيراد جديد
+            </a>
+            <a href="{% url 'revenue_category_list' %}" class="btn btn-info">
+                <i class="fas fa-tags"></i> إدارة الفئات
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- البحث والفلاتر -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">البحث</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ request.GET.search }}" 
+                               placeholder="ابحث برقم المرجع، العنوان، أو العميل...">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="category" class="form-label">الفئة</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">جميع الفئات</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" 
+                                        {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="revenue_type" class="form-label">النوع</label>
+                        <select class="form-select" id="revenue_type" name="revenue_type">
+                            <option value="">جميع الأنواع</option>
+                            {% for type_code, type_name in revenue_types %}
+                                <option value="{{ type_code }}" 
+                                        {% if request.GET.revenue_type == type_code %}selected{% endif %}>
+                                    {{ type_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" 
+                               value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" 
+                               value="{{ request.GET.date_to }}">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-list fa-2x text-primary mb-2"></i>
+                <h4>{{ revenues.count }}</h4>
+                <small class="text-muted">إجمالي الإيرادات</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
+                <h4>{{ total_amount|currency }}</h4>
+                <small class="text-muted">إجمالي المبلغ</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-shopping-cart fa-2x text-info mb-2"></i>
+                <h4>{{ revenues|length }}</h4>
+                <small class="text-muted">إيرادات المبيعات</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar-day fa-2x text-warning mb-2"></i>
+                <h4>{{ revenues|length }}</h4>
+                <small class="text-muted">إيرادات اليوم</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة الإيرادات -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i>
+                    قائمة الإيرادات
+                    {% if request.GET.search %}
+                        - نتائج البحث عن "{{ request.GET.search }}"
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if revenues %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>رقم المرجع</th>
+                                    <th>العنوان</th>
+                                    <th>الفئة</th>
+                                    <th>النوع</th>
+                                    <th>المبلغ</th>
+                                    <th>التاريخ</th>
+                                    <th>العميل</th>
+                                    <th>مرتبط بفاتورة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for revenue in revenues %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-success">{{ revenue.reference_number }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ revenue.title|truncatechars:30 }}</strong>
+                                        {% if revenue.description %}
+                                            <br><small class="text-muted">{{ revenue.description|truncatechars:40 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if revenue.category %}
+                                            <span class="badge bg-info">{{ revenue.category.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">غير محدد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ revenue.get_revenue_type_display }}</span>
+                                    </td>
+                                    <td class="text-success fw-bold">{{ revenue.amount|currency }}</td>
+                                    <td>{{ revenue.date|date:"Y/m/d" }}</td>
+                                    <td>{{ revenue.customer_name|default:"غير محدد" }}</td>
+                                    <td>
+                                        {% if revenue.sale_invoice %}
+                                            <a href="{% url 'sale_invoice_detail' revenue.sale_invoice.pk %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                فاتورة #{{ revenue.sale_invoice.invoice_number }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">غير مرتبط</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'revenue_detail' revenue.pk %}" 
+                                               class="btn btn-sm btn-outline-info" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if not revenue.sale_invoice %}
+                                                <a href="{% url 'revenue_edit' revenue.pk %}" 
+                                                   class="btn btn-sm btn-outline-warning" title="تعديل">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="confirmDelete('{{ revenue.reference_number }}', '{% url 'revenue_delete' revenue.pk %}')" 
+                                                        title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-arrow-up fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد إيرادات</h5>
+                        {% if request.GET.search %}
+                            <p class="text-muted">لم يتم العثور على نتائج للبحث "{{ request.GET.search }}"</p>
+                            <a href="{% url 'revenue_list' %}" class="btn btn-primary">
+                                <i class="fas fa-list"></i> عرض جميع الإيرادات
+                            </a>
+                        {% else %}
+                            <p class="text-muted">ابدأ بإضافة إيراد جديد</p>
+                            <a href="{% url 'revenue_create' %}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> إضافة إيراد جديد
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i>
+                        معلومات حول الإيرادات:
+                    </h6>
+                    <ul class="mb-0">
+                        <li><strong>الإيرادات التلقائية:</strong> يتم إنشاء إيراد تلقائياً عند إنشاء فاتورة مبيعات</li>
+                        <li><strong>الإيرادات اليدوية:</strong> يمكن إضافة إيرادات أخرى مثل الخدمات أو الإيرادات المتنوعة</li>
+                        <li><strong>الفئات:</strong> تساعد في تصنيف الإيرادات لسهولة التتبع والتقارير</li>
+                        <li><strong>التعديل:</strong> لا يمكن تعديل أو حذف الإيرادات المرتبطة بفواتير المبيعات</li>
+                        <li><strong>التقارير:</strong> تظهر جميع الإيرادات في التقارير المالية</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الإيراد "<span id="deleteItemName"></span>"؟</p>
+                <p class="text-danger"><strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}
