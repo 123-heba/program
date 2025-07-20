@@ -150,6 +150,24 @@ def admin_required(view_func):
     return _wrapped_view
 
 
+def superuser_required(view_func):
+    """
+    ديكوريتر للتأكد من أن المستخدم مدير عام فقط
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        # السماح للمدير العام فقط
+        if not request.user.is_superuser:
+            messages.error(request, "هذه الصفحة متاحة للمدير العام فقط.")
+            return redirect('dashboard')
+
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
 # قائمة الصلاحيات المتاحة في النظام
 SYSTEM_PERMISSIONS = {
     # صلاحيات المنتجات

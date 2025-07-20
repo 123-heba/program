@@ -147,15 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
 
-        // تأكيد الحفظ
-        const totalAmount = parseFloat(document.getElementById('total-amount').textContent) || 0;
-        if (totalAmount <= 0) {
-            e.preventDefault();
-            alert('إجمالي الفاتورة يجب أن يكون أكبر من صفر');
-            return false;
-        }
-
-        return confirm(`هل أنت متأكد من حفظ الفاتورة؟\nالإجمالي: ${totalAmount.toFixed(2)} {% currency_symbol %}`);
+        return true; // السماح بإرسال النموذج
     });
 
     productRowsContainer.addEventListener('click', function(e) {
@@ -189,36 +181,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateTotalAmount() {
         let total = 0;
         const productRows = productRowsContainer.querySelectorAll('.product-row');
-
-        console.log('Updating total amount, found rows:', productRows.length);
-
-        productRows.forEach((row, index) => {
-            const priceInput = row.querySelector('.price-input');
+        
+        productRows.forEach(row => {
             const quantityInput = row.querySelector('.quantity-input');
-            const rowTotalElement = row.querySelector('.row-total');
-
-            if (priceInput && quantityInput && rowTotalElement) {
+            const priceInput = row.querySelector('.price-input');
+            
+            if (quantityInput && priceInput) {
+                const quantity = parseFloat(quantityInput.value) || 0;
                 const price = parseFloat(priceInput.value) || 0;
-                const quantity = parseInt(quantityInput.value) || 0;
-                const rowTotal = price * quantity;
-
-                console.log(`Row ${index}: Price=${price}, Quantity=${quantity}, Total=${rowTotal}`);
-
-                // تحديث إجمالي الصف
-                rowTotalElement.textContent = rowTotal.toFixed(2) + ' {% currency_symbol %}';
-
-                total += rowTotal;
+                total += quantity * price;
             }
         });
 
-        console.log('Grand total:', total);
-
-        // تحديث الإجمالي العام
         if (totalAmountSpan) {
             totalAmountSpan.textContent = total.toFixed(2);
-            console.log('Updated total amount span to:', total.toFixed(2));
-        } else {
-            console.error('Total amount span not found!');
         }
     }
 });

@@ -15,7 +15,7 @@
                 {% if object %}تعديل تفاصيل عنصر الطلب{% else %}إضافة منتج جديد للطلب{% endif %}
             </p>
         </div>
-        <a href="{% url 'order_detail' order.id %}" class="btn btn-secondary">
+        <a href="{% url 'order_detail' order.pk %}" class="btn btn-secondary">
             <i class="fas fa-arrow-right"></i> العودة للطلب
         </a>
     </div>
@@ -73,7 +73,7 @@
                     </div>
                     
                     <div class="d-flex justify-content-between">
-                        <a href="{% url 'order_detail' order.id %}" class="btn btn-secondary">
+                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-secondary">
                             <i class="fas fa-times"></i> إلغاء
                         </a>
                         <button type="submit" class="btn btn-primary">
@@ -142,15 +142,14 @@
                     <li><i class="fas fa-check text-success"></i> أدخل الكمية المطلوبة</li>
                     <li><i class="fas fa-check text-success"></i> سيتم عرض الكمية المتاحة في المخزون</li>
                     <li><i class="fas fa-check text-success"></i> تأكد من صحة سعر الوحدة</li>
-                    <li><i class="fas fa-check text-success"></i> سيتم حساب السعر الإجمالي تلقائياً</li>
+                    <li><i class="fas fa-check text-success"></i> سيتم حساب السعر الإجمالي تلقائ<|im_start|>
+</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const productSelect = document.getElementById('{{ form.product.id_for_label }}');
@@ -158,45 +157,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitPriceInput = document.getElementById('{{ form.unit_price.id_for_label }}');
     const totalPriceInput = document.getElementById('total_price');
     const availableQuantityDiv = document.getElementById('available-quantity');
-    
-    // تحميل معلومات المنتج عند التغيير
-    productSelect.addEventListener('change', function() {
-        if (this.value) {
-            fetch(`/inventory/api/product/${this.value}/`)
-                .then(response => response.json())
-                .then(data => {
-                    unitPriceInput.value = data.price;
-                    availableQuantityDiv.innerHTML = `الكمية المتاحة في المخزون: <strong>${data.quantity}</strong>`;
-                    calculateTotal();
-                })
-                .catch(error => console.error('Error:', error));
-        } else {
-            unitPriceInput.value = '';
-            availableQuantityDiv.innerHTML = '';
-            totalPriceInput.value = '';
-        }
-    });
-    
-    // حساب السعر الإجمالي
-    function calculateTotal() {
+
+    function updateTotalPrice() {
         const quantity = parseFloat(quantityInput.value) || 0;
         const unitPrice = parseFloat(unitPriceInput.value) || 0;
         const total = quantity * unitPrice;
         totalPriceInput.value = total.toFixed(2);
     }
-    
-    // تحديث السعر الإجمالي عند تغيير الكمية أو السعر
-    quantityInput.addEventListener('input', calculateTotal);
-    unitPriceInput.addEventListener('input', calculateTotal);
-    
-    // حساب السعر الإجمالي عند تحميل الصفحة
-    calculateTotal();
-    
-    // إذا كان هناك منتج محدد بالفعل، قم بتحميل معلوماته
-    if (productSelect.value) {
-        const event = new Event('change');
-        productSelect.dispatchEvent(event);
+
+    function updateAvailableQuantity() {
+        if (productSelect.value) {
+            // يمكن إضافة AJAX هنا لجلب الكمية المتاحة
+            availableQuantityDiv.innerHTML = '<small class="text-info">تحقق من الكمية المتاحة في المخزون</small>';
+        } else {
+            availableQuantityDiv.innerHTML = '';
+        }
     }
+
+    productSelect.addEventListener('change', updateAvailableQuantity);
+    quantityInput.addEventListener('input', updateTotalPrice);
+    unitPriceInput.addEventListener('input', updateTotalPrice);
+
+    // تحديث أولي
+    updateAvailableQuantity();
+    updateTotalPrice();
 });
 </script>
 {% endblock %}

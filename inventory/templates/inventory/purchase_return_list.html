@@ -58,7 +58,7 @@
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-undo fa-2x text-danger mb-2"></i>
-                <h4>{{ returns.count }}</h4>
+                <h4>{{ total_total_r }}</h4>
                 <small class="text-muted">إجمالي المرتجعات</small>
             </div>
         </div>
@@ -67,7 +67,7 @@
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-calendar-day fa-2x text-info mb-2"></i>
-                <h4>{{ returns|length }}</h4>
+                <h4>{{ today_today_r}}</h4>
                 <small class="text-muted">مرتجعات اليوم</small>
             </div>
         </div>
@@ -76,10 +76,7 @@
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-money-bill-wave fa-2x text-danger mb-2"></i>
-                <h4>
-                    {% widthratio returns.aggregate.total_amount 1 1 %}
-                    {% currency_symbol %}
-                </h4>
+                <h4>{{ total_amount|currency }}</h4>
                 <small class="text-muted">إجمالي قيمة المرتجعات</small>
             </div>
         </div>
@@ -180,46 +177,15 @@
                         معلومات حول مرتجعات المشتريات:
                     </h6>
                     <ul class="mb-0">
-                        <li><strong>خصم من المخزون:</strong> عند إنشاء مرتجع مشتريات، تتم خصم الكميات المرتجعة من المخزون تلقائياً</li>
+                        <li><strong>خصم من المخزون:</strong> عند إنشاء مرتجع مشتريات، تتم خصم الكميات المرتجعة من المخزون تلقائ<|im_end|></li>
                         <li><strong>إنشاء المرتجع:</strong> يمكن إنشاء مرتجع من صفحة تفاصيل أي فاتورة مشتريات</li>
-                        <li><strong>التحقق من المخزون:</strong> تأكد من توفر الكمية في المخزون قبل إنشاء المرتجع</li>
                         <li><strong>التتبع:</strong> يتم ربط كل مرتجع بالفاتورة الأصلية لسهولة التتبع</li>
                         <li><strong>التقارير:</strong> تظهر المرتجعات في التقارير المالية كخصم من المشتريات</li>
+                        <li><strong>المورد:</strong> تأكد من إبلاغ المورد بالمرتجع وترتيب استرداد المبلغ</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.card {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border: none;
-    margin-bottom: 1rem;
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-}
-
-.btn-group .btn {
-    margin: 0 2px;
-}
-
-.badge {
-    font-size: 0.9em;
-}
-
-.text-danger {
-    color: #dc3545 !important;
-}
-
-.text-warning {
-    color: #ffc107 !important;
-}
-</style>
 {% endblock %}

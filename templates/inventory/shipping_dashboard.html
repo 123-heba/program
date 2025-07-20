@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم الشحن{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-shipping-fast"></i>
+                        لوحة تحكم الشحن
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- إحصائيات الشحن -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">في الانتظار</span>
+                                    <span class="info-box-number">{{ shipping_stats.pending }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info">
+                                    <i class="fas fa-cog"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">قيد المعالجة</span>
+                                    <span class="info-box-number">{{ shipping_stats.processing }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-primary">
+                                    <i class="fas fa-truck"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">تم الشحن</span>
+                                    <span class="info-box-number">{{ shipping_stats.shipped }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">تم التسليم</span>
+                                    <span class="info-box-number">{{ shipping_stats.delivered }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- جدول الشحنات -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>رقم التتبع</th>
+                                    <th>الطلب</th>
+                                    <th>العميل</th>
+                                    <th>الحالة</th>
+                                    <th>تاريخ الإنشاء</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tracking in trackings %}
+                                <tr>
+                                    <td>{{ tracking.tracking_number }}</td>
+                                    <td>{{ tracking.order }}</td>
+                                    <td>{{ tracking.order.customer.name }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if tracking.status == 'delivered' %}success{% elif tracking.status == 'shipped' %}primary{% elif tracking.status == 'processing' %}info{% else %}warning{% endif %}">
+                                            {{ tracking.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ tracking.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'track_shipment' tracking.tracking_number %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-search"></i>
+                                            تتبع
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">لا توجد شحنات</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

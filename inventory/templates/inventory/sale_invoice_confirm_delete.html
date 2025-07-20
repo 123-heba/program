@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}حذف فاتورة البيع - نظام إدارة المخزون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-trash text-danger"></i> حذف فاتورة البيع</h2>
+            <p class="text-muted mb-0">تأكيد حذف فاتورة البيع من النظام</p>
+        </div>
+        <a href="{% url 'sale_invoice_detail' invoice.pk %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للفاتورة
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تحذير - حذف فاتورة البيع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-circle"></i>
+                        هل أنت متأكد من حذف هذه الفاتورة؟
+                    </h6>
+                    <p class="mb-0">
+                        هذا الإجراء لا يمكن التراجع عنه. سيتم حذف الفاتورة نهائ<|im_start|> وإرجاع الكميات للمخزون.
+                    </p>
+                </div>
+
+                <!-- تفاصيل الفاتورة -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">تفاصيل الفاتورة</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>رقم الفاتورة:</strong></td>
+                                        <td>{{ invoice.invoice_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>العميل:</strong></td>
+                                        <td>{{ invoice.customer.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>التاريخ:</strong></td>
+                                        <td>{{ invoice.date|date:"Y/m/d" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>المبلغ الإجمالي:</strong></td>
+                                        <td>{{ invoice.total_amount|currency }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>عدد المنتجات:</strong></td>
+                                        <td>{{ invoice.items.count }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>أنشأ بواسطة:</strong></td>
+                                        <td>{{ invoice.created_by.username }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تحذير إضافي -->
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i>
+                        ما سيحدث عند الحذف:
+                    </h6>
+                    <ul class="mb-0">
+                        <li>سيتم حذف الفاتورة نهائ<|im_start|></li>
+                        <li>سيتم إرجاع جميع الكميات المباعة للمخزون</li>
+                        <li>سيتم حذف جميع عناصر الفاتورة</li>
+                        <li>لا يمكن التراجع عن هذا الإجراء</li>
+                    </ul>
+                </div>
+
+                <!-- نموذج التأكيد -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{% url 'sale_invoice_detail' invoice.pk %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                            <a href="{% url 'sale_invoice_list' %}" class="btn btn-info">
+                                <i class="fas fa-list"></i> قائمة الفواتير
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> تأكيد الحذف
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تأكيد إضافي عند الضغط على زر الحذف
+    const deleteForm = document.querySelector('form[method="post"]');
+    const deleteButton = deleteForm.querySelector('button[type="submit"]');
+    
+    deleteButton.addEventListener('click', function(e) {
+        const invoiceNumber = '{{ invoice.invoice_number }}';
+        const confirmed = confirm(`هل أنت متأكد تمام倒在地 من حذف فاتورة البيع "${invoiceNumber}"؟\n\nهذا الإجراء لا يمكن التراجع عنه!\n\nسيتم:\n- حذف الفاتورة نهائ漪\n- إرجاع الكميات للمخزون`);
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

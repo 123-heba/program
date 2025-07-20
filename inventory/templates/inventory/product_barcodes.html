@@ -247,18 +247,28 @@ const sizeSettings = {
 // إنشاء باركود واحد
 function generateSingleBarcode(barcodeData, containerId, productId) {
     const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('Container not found:', containerId);
+        return;
+    }
+    
     const settings = sizeSettings[barcodeSize];
     
-    generateSimpleBarcode(barcodeData, containerId, {
-        ...settings,
-        showText: true
-    });
-    
-    // تحديث مظهر الحاوية
-    container.classList.add('barcode-generated');
-    
-    // تحديث العدادات
-    updateCounters();
+    // استخدام مولد الباركود
+    if (typeof generateSimpleBarcode === 'function') {
+        generateSimpleBarcode(barcodeData, containerId, {
+            ...settings,
+            showText: true
+        });
+        
+        // تحديث مظهر الحاوية
+        container.classList.add('barcode-generated');
+        
+        // تحديث العدادات
+        setTimeout(updateCounters, 100);
+    } else {
+        console.error('مولد الباركود غير متاح');
+    }
 }
 
 // إنشاء جميع الباركودات
@@ -268,31 +278,31 @@ function generateAllBarcodes() {
     const progressText = document.getElementById('progress-text');
     
     progressContainer.style.display = 'block';
-    generatedCount = 0;
     
-    const barcodeItems = document.querySelectorAll('[id^="barcode-"]');
+    // الحصول على جميع أزرار الإنشاء
+    const generateButtons = document.querySelectorAll('.btn-primary[onclick*="generateSingleBarcode"]');
+    let processedCount = 0;
     
-    barcodeItems.forEach((container, index) => {
+    generateButtons.forEach((button, index) => {
         setTimeout(() => {
-            const productData = container.id.replace('barcode-', '');
-            const barcodeData = container.parentElement.querySelector('.text-muted').textContent.trim();
+            // محاكاة الضغط على الزر
+            button.click();
             
-            if (barcodeData && barcodeData !== 'انقر لإنشاء الباركود') {
-                generateSingleBarcode(barcodeData, container.id, productData);
-            }
+            processedCount++;
             
             // تحديث شريط التقدم
-            const progress = ((index + 1) / barcodeItems.length) * 100;
+            const progress = (processedCount / generateButtons.length) * 100;
             progressBar.style.width = progress + '%';
-            progressText.textContent = `${index + 1} من ${barcodeItems.length}`;
+            progressText.textContent = `${processedCount} من ${generateButtons.length}`;
             
             // إخفاء شريط التقدم عند الانتهاء
-            if (index === barcodeItems.length - 1) {
+            if (processedCount === generateButtons.length) {
                 setTimeout(() => {
                     progressContainer.style.display = 'none';
+                    updateCounters();
                 }, 1000);
             }
-        }, index * 100); // تأخير 100ms بين كل باركود
+        }, index * 300); // تأخير 300ms بين كل ضغطة
     });
 }
 
@@ -339,6 +349,15 @@ function updateCounters() {
 
 // تحديث العدادات عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, checking barcode library...');
+    
+    // التحقق من تحميل مكتبة الباركود
+    if (typeof generateSimpleBarcode === 'undefined') {
+        console.error('مكتبة الباركود غير محملة بشكل صحيح');
+        return;
+    }
+    
+    console.log('مكتبة الباركود محملة بنجاح');
     updateCounters();
 });
 </script>

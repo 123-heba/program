@@ -29,13 +29,15 @@ urlpatterns = [
     # فواتير البيع
     path("sales/", views.sale_invoice_list, name="sale_invoice_list"),
     path("sales/create/", views.sale_invoice_create, name="sale_invoice_create"),
-     path("sales/<int:pk>/", views.sale_invoice_detail, name="sale_invoice_detail"),
+    path("sales/<int:pk>/", views.sale_invoice_detail, name="sale_invoice_detail"),
+    path("sales/<int:pk>/delete/", views.sale_invoice_delete, name="sale_invoice_delete"),
     path("sales/<int:pk>/print/", views.sale_invoice_print, name="sale_invoice_print"),
-
+    
     # فواتير الشراء
     path("purchases/", views.purchase_invoice_list, name="purchase_invoice_list"),
     path("purchases/create/", views.purchase_invoice_create, name="purchase_invoice_create"),
     path("purchases/<int:pk>/", views.purchase_invoice_detail, name="purchase_invoice_detail"),
+    path("purchases/<int:pk>/delete/", views.purchase_invoice_delete, name="purchase_invoice_delete"),
     path("purchases/<int:pk>/print/", views.purchase_invoice_print, name="purchase_invoice_print"),
     
     # الطلبات
@@ -101,6 +103,13 @@ urlpatterns = [
     # API endpoints
     path("api/product/<int:product_id>/price/", views.get_product_price, name="get_product_price"),
     path("api/product/<int:product_id>/check/<int:quantity>/", views.check_product_availability, name="check_product_availability"),
+
+    # WooCommerce Integration
+    path("woocommerce/sync/", views.woocommerce_sync, name="woocommerce_sync"),
+    
+    # Shipping Integration
+    path("shipping/dashboard/", views.shipping_dashboard, name="shipping_dashboard"),
+    path("shipping/track/<str:tracking_number>/", views.track_shipment, name="track_shipment"),
 ]
 
 

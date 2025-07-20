@@ -30,11 +30,7 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-plus-circle"></i>
-                    {% if revenue %}
-                        تعديل الإيراد {{ revenue.reference_number }}
-                    {% else %}
-                        إضافة إيراد جديد
-                    {% endif %}
+                    بيانات الإيراد
                 </h5>
             </div>
             <div class="card-body">
@@ -66,25 +62,22 @@
                             {% endif %}
                         </div>
                         
-                        <!-- الفئة والنوع -->
+                        <!-- الفئة ونوع الإيراد -->
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.category.id_for_label }}" class="form-label">
                                 <i class="fas fa-tags"></i>
-                                فئة الإيراد
+                                الفئة
                             </label>
                             {{ form.category }}
                             {% if form.category.errors %}
                                 <div class="text-danger mt-1">{{ form.category.errors }}</div>
                             {% endif %}
-                            <small class="form-text text-muted">
-                                <a href="{% url 'revenue_category_create' %}" target="_blank">إضافة فئة جديدة</a>
-                            </small>
                         </div>
                         
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.revenue_type.id_for_label }}" class="form-label">
                                 <i class="fas fa-list"></i>
-                                نوع الإيراد <span class="text-danger">*</span>
+                                نوع الإيراد
                             </label>
                             {{ form.revenue_type }}
                             {% if form.revenue_type.errors %}
@@ -96,7 +89,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.amount.id_for_label }}" class="form-label">
                                 <i class="fas fa-money-bill-wave"></i>
-                                المبلغ ({% currency_symbol %}) <span class="text-danger">*</span>
+                                المبلغ <span class="text-danger">*</span>
                             </label>
                             {{ form.amount }}
                             {% if form.amount.errors %}
@@ -107,7 +100,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.payment_method.id_for_label }}" class="form-label">
                                 <i class="fas fa-credit-card"></i>
-                                طريقة الدفع <span class="text-danger">*</span>
+                                طريقة الدفع
                             </label>
                             {{ form.payment_method }}
                             {% if form.payment_method.errors %}
@@ -119,7 +112,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.date.id_for_label }}" class="form-label">
                                 <i class="fas fa-calendar"></i>
-                                تاريخ الإيراد <span class="text-danger">*</span>
+                                التاريخ <span class="text-danger">*</span>
                             </label>
                             {{ form.date }}
                             {% if form.date.errors %}
@@ -142,7 +135,7 @@
                         <div class="col-md-12 mb-3">
                             <label for="{{ form.notes.id_for_label }}" class="form-label">
                                 <i class="fas fa-sticky-note"></i>
-                                ملاحظات إضافية
+                                ملاحظات
                             </label>
                             {{ form.notes }}
                             {% if form.notes.errors %}
@@ -151,55 +144,16 @@
                         </div>
                     </div>
                     
-                    <!-- أزرار التحكم -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <a href="{% url 'revenue_list' %}" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> إلغاء
-                                    </a>
-                                </div>
-                                <div>
-                                    <button type="reset" class="btn btn-warning me-2">
-                                        <i class="fas fa-undo"></i> إعادة تعيين
-                                    </button>
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="fas fa-save"></i>
-                                        {% if revenue %}
-                                            تحديث الإيراد
-                                        {% else %}
-                                            حفظ الإيراد
-                                        {% endif %}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'revenue_list' %}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i>
+                            {% if revenue %}تحديث{% else %}حفظ{% endif %}
+                        </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- معلومات إضافية -->
-<div class="row mt-4">
-    <div class="col-lg-8 mx-auto">
-        <div class="card">
-            <div class="card-body">
-                <div class="alert alert-info" role="alert">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-lightbulb"></i>
-                        نصائح مهمة:
-                    </h6>
-                    <ul class="mb-0">
-                        <li><strong>رقم المرجع:</strong> سيتم إنشاؤه تلقائياً عند الحفظ</li>
-                        <li><strong>الفئات:</strong> تساعد في تصنيف الإيرادات وإنشاء التقارير</li>
-                        <li><strong>نوع الإيراد:</strong> حدد النوع المناسب لسهولة التتبع</li>
-                        <li><strong>طريقة الدفع:</strong> مهمة للتقارير المالية والمحاسبية</li>
-                        <li><strong>التاريخ:</strong> يُستخدم في التقارير الزمنية والإحصائيات</li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>

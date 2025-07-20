@@ -1037,4 +1037,50 @@ class Expense(models.Model):
         return f"{self.reference_number} - {self.title} - {self.amount} ر.س"
 
 
+class WooCommerceSync(models.Model):
+    """نموذج لتتبع مزامنة WooCommerce"""
+    SYNC_TYPES = [
+        ('product', 'منتج'),
+        ('customer', 'عميل'),
+        ('order', 'طلب'),
+    ]
+    
+    sync_type = models.CharField(max_length=20, choices=SYNC_TYPES)
+    local_id = models.IntegerField()
+    woocommerce_id = models.IntegerField()
+    last_sync = models.DateTimeField(auto_now=True)
+    sync_status = models.CharField(max_length=20, default='synced')
+    
+    class Meta:
+        unique_together = ['sync_type', 'local_id']
+        verbose_name = "مزامنة WooCommerce"
+        verbose_name_plural = "مزامنات WooCommerce"
+
+
+class ShippingTracking(models.Model):
+    """نموذج لتتبع الشحنات"""
+    SHIPPING_STATUS = [
+        ('pending', 'في الانتظار'),
+        ('processing', 'قيد المعالجة'),
+        ('shipped', 'تم الشحن'),
+        ('delivered', 'تم التسليم'),
+        ('cancelled', 'ملغي'),
+    ]
+    
+    order = models.OneToOneField('Order', on_delete=models.CASCADE)
+    tracking_number = models.CharField(max_length=100, unique=True)
+    shipping_company = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=SHIPPING_STATUS, default='pending')
+    estimated_delivery = models.DateTimeField(null=True, blank=True)
+    actual_delivery = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "تتبع الشحنة"
+        verbose_name_plural = "تتبع الشحنات"
+    
+    def __str__(self):
+        return f"شحنة {self.tracking_number} - {self.order}"
+
 

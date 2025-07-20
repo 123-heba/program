@@ -11,7 +11,7 @@
             <p class="text-muted mb-0">تفاصيل مرتجع المشتريات</p>
         </div>
         <div>
-            <a href="{% url 'purchase_invoice_detail' purchase_return.original_invoice.pk %}" class="btn btn-info me-2">
+            <a href="{% if purchase_return.original_invoice %}{% url 'purchase_invoice_detail' purchase_return.original_invoice.pk %}{% else %}#{% endif %}" class="btn btn-info me-2">
                 <i class="fas fa-file-invoice"></i> الفاتورة الأصلية
             </a>
             <a href="{% url 'purchase_return_list' %}" class="btn btn-secondary">
@@ -58,9 +58,13 @@
                             <tr>
                                 <td><strong>الفاتورة الأصلية:</strong></td>
                                 <td>
+                                    {% if purchase_return.original_invoice %}
                                     <a href="{% url 'purchase_invoice_detail' purchase_return.original_invoice.pk %}" class="btn btn-sm btn-outline-primary">
                                         {{ purchase_return.original_invoice.invoice_number }}
                                     </a>
+                                    {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
@@ -195,42 +199,14 @@
                         معلومات مهمة:
                     </h6>
                     <ul class="mb-0">
-                        <li>تم خصم جميع الكميات المرتجعة من المخزون تلقائياً</li>
-                        <li>يمكن الرجوع للفاتورة الأصلية لمراجعة التفاصيل</li>
-                        <li>هذا المرتجع لا يمكن تعديله أو حذفه بعد الإنشاء</li>
-                        <li>تاريخ المرتجع يُستخدم في التقارير المالية</li>
-                        <li>تأكد من إبلاغ المورد بالمرتجع وترتيب استرداد المبلغ</li>
+                        <li>تم خصم جميع الكميات المرتجعة من المخزون تلقائ<|im_start|></li>
+                        <li>يجب التنسيق مع المورد لاسترداد قيمة البضاعة المرتجعة</li>
+                        <li>تأكد من حالة المنتجات قبل الإرجاع للمورد</li>
+                        <li>هذا المرتجع مرتبط بالفاتورة الأصلية للمتابعة</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.card {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border: none;
-}
-
-.card-header {
-    border-bottom: 2px solid rgba(0,0,0,0.1);
-}
-
-.table th {
-    border-top: none;
-}
-
-.badge {
-    font-size: 0.9em;
-}
-
-@media print {
-    .btn, .page-header .d-flex > div:last-child {
-        display: none !important;
-    }
-}
-</style>
 {% endblock %}

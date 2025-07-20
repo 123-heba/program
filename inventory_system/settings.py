@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'inventory',
+    # 'django_celery_beat',      # معطل
+    # 'django_celery_results',   # معطل
 ]
 
 MIDDLEWARE = [
@@ -133,3 +135,34 @@ LOGOUT_REDIRECT_URL = '/login/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# WooCommerce API Settings - حدث هذه القيم
+WOOCOMMERCE_API_URL = " "  # ضع رابط متجرك الحقيقي
+WOOCOMMERCE_CONSUMER_KEY = "ck_6ef72ad8a49533e066ddfc064d4bbe8bb66547db"  # المفتاح اللي حصلت عليه
+WOOCOMMERCE_CONSUMER_SECRET = "cs_560d430121c150c7da165084ecde13a7192c85f8"  # السر اللي حصلت عليه
+
+# Shipping API Settings
+SHIPPING_API_KEY = "6f5a46902c4b00c58fd2fc7d50032b12b6feae279a472aa4f8e5bed51be6cf65"
+SHIPPING_API_URL = ""
+
+# Celery Configuration for background tasks
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'UTC'
+
+# إعدادات بديلة لتعطيل Celery تمام
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_URL = None
+CELERY_RESULT_BACKEND = None
+
+# إزالة أي مراجع لـ Redis
+# CELERY_BROKER_URL = 'redis://localhost:6379'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+# تعطيل جميع مهام Celery
+CELERY_TASK_ROUTES = {}
+CELERY_BEAT_SCHEDULE = {}

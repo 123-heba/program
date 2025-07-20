@@ -380,11 +380,9 @@ const salesPurchasesChart = new Chart(ctx, {
 
 function exportReport(format) {
     if (format === 'excel') {
-        // يمكن إضافة رابط تصدير Excel هنا
-        alert('ميزة تصدير Excel قيد التطوير');
+        window.location.href = '{% url "export_reports_excel" %}';
     } else if (format === 'pdf') {
-        // يمكن إضافة رابط تصدير PDF هنا
-        alert('ميزة تصدير PDF قيد التطوير');
+        window.location.href = '{% url "export_reports_pdf" %}';
     }
 }
 

@@ -6,4 +6,6 @@ class InventoryConfig(AppConfig):
     name = 'inventory'
 
     def ready(self):
-        import inventory.signals
+        # تعطيل تحميل الـ signals مؤقت
+        # import inventory.signals
+        pass

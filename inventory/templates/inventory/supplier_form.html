@@ -30,7 +30,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="supplierForm">
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
@@ -103,5 +103,69 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('supplierForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // تعطيل الزر أثناء الإرسال
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // إظهار رسالة نجاح
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show';
+                    alert.innerHTML = `
+                        <i class="fas fa-check-circle"></i> تم حفظ بيانات المورد بنجاح
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    form.insertBefore(alert, form.firstChild);
+                    
+                    // العودة لقائمة الموردين بعد ثانيتين
+                    setTimeout(() => {
+                        window.location.href = "{% url 'supplier_list' %}";
+                    }, 2000);
+                } else {
+                    throw new Error('فشل في الحفظ');
+                }
+            })
+            .catch(error => {
+                // إظهار رسالة خطأ
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger alert-dismissible fade show';
+                alert.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i> حدث خطأ أثناء الحفظ
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                form.insertBefore(alert, form.firstChild);
+            })
+            .finally(() => {
+                // إعادة تفعيل الزر
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+</script>
 {% endblock %}
 
